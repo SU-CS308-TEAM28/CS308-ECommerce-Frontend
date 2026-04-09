@@ -40,7 +40,7 @@ export default function RootLayout({
               padding: "20px 24px",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
+              justifyContent: "space-between",
             }}
           >
             <div
@@ -54,10 +54,13 @@ export default function RootLayout({
                 src="/MainLogo.png"
                 alt="Main Logo"
                 fill
+                sizes="170px"
                 style={{ objectFit: "contain" }}
                 priority
               />
             </div>
+
+            <div style={{ width: "170px" }} />
           </div>
         </header>
 
