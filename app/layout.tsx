@@ -26,37 +26,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {/* TOP NAVIGATION BAR */}
-        <div
-          style={{
-            borderBottom: "1px solid #e5e7eb",
-            backgroundColor: "#f8f8f8",
-            fontSize: "14px",
-          }}
-        >
-          <div
-            style={{
-              maxWidth: "1200px",
-              margin: "0 auto",
-              padding: "12px 24px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", gap: "20px" }}>
-              <span style={{ cursor: "pointer" }}>Campaigns</span>
-              <span style={{ cursor: "pointer" }}>FAQ</span>
-            </div>
-
-            <div style={{ fontWeight: 600 }}>Nethouse</div>
-
-            <div style={{ display: "flex", gap: "20px" }}>
-              <span style={{ cursor: "pointer" }}>Gift Guide</span>
-            </div>
-          </div>
-        </div>
-
         {/* MAIN HEADER */}
         <header
           style={{
@@ -71,7 +40,7 @@ export default function RootLayout({
               padding: "20px 24px",
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
+              justifyContent: "center",
             }}
           >
             <div
@@ -89,10 +58,6 @@ export default function RootLayout({
                 priority
               />
             </div>
-
-            <div style={{ fontSize: "15px", color: "#666" }}>
-              Homepage Header
-            </div>
           </div>
         </header>
 
@@ -109,10 +74,13 @@ export default function RootLayout({
               margin: "0 auto",
               padding: "18px 24px",
               display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
               gap: "28px",
               flexWrap: "wrap",
               fontSize: "16px",
               fontWeight: 500,
+              color: "#111827",
             }}
           >
             <span style={{ cursor: "pointer" }}>Electronics</span>
