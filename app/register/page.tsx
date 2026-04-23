@@ -14,7 +14,7 @@ export default function RegisterPage() {
 
   const router = useRouter();
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     setError("");
 
     if (!firstName || !lastName || !email || !password || !birthDate) {
@@ -24,10 +24,35 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          password,
+          birthDate: new Date(birthDate).toISOString(),
+        }),
+      });
+
+      const data = await response.json();
+      console.log("Register response:", data);
+
+      if (response.ok) {
+        router.push("/login");
+      } else {
+        setError(data.message || "Registration failed");
+      }
+    } catch (err) {
+      console.error("Register error:", err);
+      setError("Could not connect to backend");
+    } finally {
       setLoading(false);
-      router.push("/login");
-    }, 1000);
+    }
   };
 
   return (
