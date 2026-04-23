@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Image from "next/image";
+import SearchBar from "../components/SearchBar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -63,49 +64,14 @@ export default function RootLayout({
         </div>
 
         <div
-  style={{
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    transform: "translateX(-40px)", // sola kaydırır
-  }}
->
-      
-        
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "620px",
-              display: "flex",
-              alignItems: "center",
-              border: "1px solid #d1d5db",
-              borderRadius: "14px",
-              padding: "0 14px",
-              backgroundColor: "#ffffff",
-            }}
-          >
-            <input
-              type="text"
-              placeholder="Search products..."
-              style={{
-                flex: 1,
-                padding: "14px 10px",
-                border: "none",
-                outline: "none",
-                fontSize: "15px",
-                backgroundColor: "transparent",
-              }}
-            />
-            <span
-              style={{
-                fontSize: "18px",
-                color: "#6b7280",
-                cursor: "pointer",
-              }}
-            >
-              🔍
-            </span>
-          </div>
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            transform: "translateX(-40px)",
+          }}
+        >
+          <SearchBar />
         </div>
       
         <div
