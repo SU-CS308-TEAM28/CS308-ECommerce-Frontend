@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ProductCard from '../../components/ProductCard';
 
 const PRODUCTS = [
@@ -99,6 +100,8 @@ const PRODUCTS = [
 const CATEGORIES = ['All', 'Phones', 'Tablets', 'Computers', 'TVs', 'Accessories', 'Smart Devices'];
 
 export default function ProductsPage() {
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') ?? '');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
@@ -109,6 +112,10 @@ export default function ProductsPage() {
       if (selectedCategory !== 'All' && p.category !== selectedCategory) return false;
       if (priceMin !== '' && p.price < Number(priceMin)) return false;
       if (priceMax !== '' && p.price > Number(priceMax)) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        if (!p.name.toLowerCase().includes(q) && !p.category.toLowerCase().includes(q)) return false;
+      }
       return true;
     })
     .sort((a, b) => {
@@ -121,7 +128,7 @@ export default function ProductsPage() {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
       <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#111827', margin: '0 0 28px 0' }}>
-        {selectedCategory === 'All' ? 'All Products' : selectedCategory}
+        {searchQuery ? `Results for "${searchQuery}"` : selectedCategory === 'All' ? 'All Products' : selectedCategory}
       </h1>
 
       <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
@@ -134,7 +141,7 @@ export default function ProductsPage() {
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(cat)}
+                onClick={() => { setSelectedCategory(cat); setSearchQuery(''); }}
                 style={{
                   padding: '10px 14px',
                   borderRadius: '10px',
