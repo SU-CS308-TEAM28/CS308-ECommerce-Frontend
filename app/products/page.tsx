@@ -102,13 +102,21 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
+  const [sortBy, setSortBy] = useState('popular');
 
-  const filtered = PRODUCTS.filter((p) => {
-    if (selectedCategory !== 'All' && p.category !== selectedCategory) return false;
-    if (priceMin !== '' && p.price < Number(priceMin)) return false;
-    if (priceMax !== '' && p.price > Number(priceMax)) return false;
-    return true;
-  });
+  const filtered = PRODUCTS
+    .filter((p) => {
+      if (selectedCategory !== 'All' && p.category !== selectedCategory) return false;
+      if (priceMin !== '' && p.price < Number(priceMin)) return false;
+      if (priceMax !== '' && p.price > Number(priceMax)) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'price_asc') return a.price - b.price;
+      if (sortBy === 'price_desc') return b.price - a.price;
+      if (sortBy === 'rating') return b.ratings.value - a.ratings.value;
+      return b.ratings.count - a.ratings.count; // popular
+    });
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
@@ -168,9 +176,21 @@ export default function ProductsPage() {
 
         {/* Product grid */}
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 16px 0' }}>
-            {filtered.length} product{filtered.length !== 1 ? 's' : ''} found
-          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
+              {filtered.length} product{filtered.length !== 1 ? 's' : ''} found
+            </p>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{ padding: '9px 14px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px', color: '#374151', backgroundColor: '#ffffff', cursor: 'pointer', outline: 'none' }}
+            >
+              <option value="popular">Most Popular</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="rating">Highest Rated</option>
+            </select>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
             {filtered.map((product) => (
               <ProductCard
