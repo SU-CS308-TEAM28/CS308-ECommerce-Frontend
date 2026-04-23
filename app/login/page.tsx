@@ -12,7 +12,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setError("");
 
     if (!email || !password) {
@@ -22,17 +22,50 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    const redirectPath = searchParams.get("redirect");
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
 
-    setTimeout(() => {
-      setLoading(false);
+      const responseText = await response.text();
 
-      if (redirectPath) {
-        router.push(redirectPath);
-      } else {
-        router.push("/");
+      let data: any = {};
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        data = { message: responseText };
       }
-    }, 1000);
+
+      console.log("Login response:", data);
+
+      if (response.ok) {
+        if (data.token) {
+          document.cookie = `token=${data.token}; path=/`;
+        }
+
+        const redirectPath = searchParams.get("redirect");
+
+        if (redirectPath) {
+          router.push(redirectPath);
+        } else {
+          router.push("/");
+        }
+      } else {
+        setError(data.message || "Login failed");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Could not connect to backend");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -170,7 +203,14 @@ export default function LoginPage() {
           {loading ? "Logging in..." : "Login"}
         </button>
 
-        <p style={{ color: "#b9c7d6", fontSize: "14px", textAlign: "center", margin: 0 }}>
+        <p
+          style={{
+            color: "#b9c7d6",
+            fontSize: "14px",
+            textAlign: "center",
+            margin: 0,
+          }}
+        >
           Don’t have an account?{" "}
           <span
             style={{
