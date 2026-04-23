@@ -42,30 +42,50 @@ export default function LoginPage() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#0f0f0f",
+        background:
+          "linear-gradient(135deg, #061826 0%, #0a2340 45%, #0b2f5b 100%)",
         padding: "20px",
       }}
     >
       <div
         style={{
           width: "100%",
-          maxWidth: "400px",
-          backgroundColor: "#1a1a1a",
+          maxWidth: "420px",
+          backgroundColor: "rgba(10, 18, 30, 0.92)",
           padding: "40px 30px",
-          borderRadius: "16px",
-          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+          borderRadius: "18px",
+          boxShadow: "0 10px 35px rgba(0, 0, 0, 0.35)",
+          border: "1px solid rgba(45, 170, 225, 0.25)",
           display: "flex",
           flexDirection: "column",
           gap: "18px",
         }}
       >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: "8px",
+          }}
+        >
+          <img
+            src="/MainLogo.png"
+            alt="TeknoCS Logo"
+            style={{
+              width: "190px",
+              height: "auto",
+              objectFit: "contain",
+            }}
+          />
+        </div>
+
         <h1
           style={{
             margin: 0,
             textAlign: "center",
-            fontSize: "32px",
+            fontSize: "30px",
             fontWeight: "bold",
-            color: "white",
+            color: "#ffffff",
           }}
         >
           Login
@@ -75,7 +95,7 @@ export default function LoginPage() {
           style={{
             margin: 0,
             textAlign: "center",
-            color: "#b3b3b3",
+            color: "#b9c7d6",
             fontSize: "14px",
           }}
         >
@@ -83,7 +103,7 @@ export default function LoginPage() {
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <label style={{ color: "white", fontSize: "14px" }}>Email</label>
+          <label style={{ color: "#dce8f5", fontSize: "14px" }}>Email</label>
           <input
             type="email"
             placeholder="Enter your email"
@@ -91,9 +111,9 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             style={{
               padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #333",
-              backgroundColor: "#262626",
+              borderRadius: "10px",
+              border: "1px solid #2DAAE1",
+              backgroundColor: "#10243a",
               color: "white",
               outline: "none",
             }}
@@ -101,7 +121,7 @@ export default function LoginPage() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <label style={{ color: "white", fontSize: "14px" }}>Password</label>
+          <label style={{ color: "#dce8f5", fontSize: "14px" }}>Password</label>
           <input
             type="password"
             placeholder="Enter your password"
@@ -109,9 +129,9 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             style={{
               padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #333",
-              backgroundColor: "#262626",
+              borderRadius: "10px",
+              border: "1px solid #2DAAE1",
+              backgroundColor: "#10243a",
               color: "white",
               outline: "none",
             }}
@@ -121,7 +141,7 @@ export default function LoginPage() {
         {error && (
           <p
             style={{
-              color: "#ff4d4f",
+              color: "#ff6b6b",
               margin: 0,
               fontSize: "14px",
               textAlign: "center",
@@ -137,26 +157,33 @@ export default function LoginPage() {
           disabled={loading}
           style={{
             padding: "12px",
-            borderRadius: "8px",
+            borderRadius: "10px",
             border: "none",
-            backgroundColor: loading ? "#666" : "#ffffff",
-            color: "#000000",
+            backgroundColor: loading ? "#5d7f92" : "#2DAAE1",
+            color: "#ffffff",
             fontWeight: "bold",
             cursor: loading ? "not-allowed" : "pointer",
             transition: "0.2s",
+            marginTop: "4px",
           }}
         >
           {loading ? "Logging in..." : "Login"}
         </button>
-        <p style={{ color: "#b3b3b3", fontSize: "14px", textAlign: "center" }}>
-  Don’t have an account?{" "}
-  <span
-    style={{ color: "white", cursor: "pointer", textDecoration: "underline" }}
-    onClick={() => router.push("/register")}
-  >
-    Register
-  </span>
-</p>
+
+        <p style={{ color: "#b9c7d6", fontSize: "14px", textAlign: "center", margin: 0 }}>
+          Don’t have an account?{" "}
+          <span
+            style={{
+              color: "#6ed6ff",
+              cursor: "pointer",
+              textDecoration: "underline",
+              fontWeight: 500,
+            }}
+            onClick={() => router.push("/register")}
+          >
+            Register
+          </span>
+        </p>
       </div>
     </main>
   );
