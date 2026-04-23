@@ -100,10 +100,15 @@ const CATEGORIES = ['All', 'Phones', 'Tablets', 'Computers', 'TVs', 'Accessories
 
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
 
-  const filtered = selectedCategory === 'All'
-    ? PRODUCTS
-    : PRODUCTS.filter((p) => p.category === selectedCategory);
+  const filtered = PRODUCTS.filter((p) => {
+    if (selectedCategory !== 'All' && p.category !== selectedCategory) return false;
+    if (priceMin !== '' && p.price < Number(priceMin)) return false;
+    if (priceMax !== '' && p.price > Number(priceMax)) return false;
+    return true;
+  });
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
@@ -137,6 +142,27 @@ export default function ProductsPage() {
                 {cat}
               </button>
             ))}
+          </div>
+
+          {/* Price filter */}
+          <div style={{ marginTop: '24px' }}>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: '#6b7280', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Price (₺)
+            </p>
+            <input
+              type="number"
+              placeholder="Min"
+              value={priceMin}
+              onChange={(e) => setPriceMin(e.target.value)}
+              style={{ width: '100%', padding: '9px 12px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px', marginBottom: '8px', outline: 'none', boxSizing: 'border-box' }}
+            />
+            <input
+              type="number"
+              placeholder="Max"
+              value={priceMax}
+              onChange={(e) => setPriceMax(e.target.value)}
+              style={{ width: '100%', padding: '9px 12px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+            />
           </div>
         </aside>
 
