@@ -1,7 +1,7 @@
 import ProductCard from "../components/ProductCard";
 
 export default function Home() {
-  const products = [
+  const popularProducts = [
     {
       id: "1",
       name: "Apple iPad Air (5th Generation) 64GB",
@@ -37,10 +37,51 @@ export default function Home() {
       image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800",
       category: "Computers",
       subcategories: ["Laptops", "Design"],
-      description:
-        "Intel Core i9, 32GB RAM, 1TB SSD, RTX 4070 graphics.",
+      description: "Intel Core i9, 32GB RAM, 1TB SSD, RTX 4070 graphics.",
       ratings: {
         count: 89,
+        value: 4.7,
+      },
+    },
+  ];
+
+  const discountedProducts = [
+    {
+      id: "4",
+      name: 'Samsung 65" Neo QLED 4K TV',
+      price: 34999,
+      image: "https://images.unsplash.com/photo-1593784991095-a205069470b6?w=800",
+      category: "TVs",
+      subcategories: ["4K", "Smart TV"],
+      description: "Crisp 4K image quality with vibrant colors and immersive sound.",
+      ratings: {
+        count: 91,
+        value: 4.6,
+      },
+    },
+    {
+      id: "5",
+      name: "Sony WH-1000XM5 Headphones",
+      price: 12999,
+      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800",
+      category: "Accessories",
+      subcategories: ["Audio", "Wireless"],
+      description: "Premium noise-cancelling headphones with long battery life.",
+      ratings: {
+        count: 176,
+        value: 4.9,
+      },
+    },
+    {
+      id: "6",
+      name: "Apple Watch Series 9",
+      price: 15499,
+      image: "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=800",
+      category: "Smart Devices",
+      subcategories: ["Wearables", "iOS"],
+      description: "Smart fitness tracking, sleek design, and smooth iPhone integration.",
+      ratings: {
+        count: 132,
         value: 4.7,
       },
     },
@@ -55,24 +96,96 @@ export default function Home() {
         backgroundColor: "#ffffff",
       }}
     >
-      {/* Slider */}
+            {/* Carousel */}
       <section
         style={{
-          height: "320px",
-          borderRadius: "16px",
-          backgroundColor: "#f3f4f6",
+          height: "360px",
+          borderRadius: "20px",
+          background: "linear-gradient(135deg, #0f172a, #1e3a8a)",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          fontSize: "24px",
-          fontWeight: 600,
-          color: "#111827",
+          justifyContent: "space-between",
+          padding: "40px",
+          color: "#ffffff",
+          overflow: "hidden",
+          gap: "24px",
         }}
       >
-        Slider Area
+        <div style={{ maxWidth: "520px" }}>
+          <p
+            style={{
+              fontSize: "14px",
+              fontWeight: 600,
+              color: "#93c5fd",
+              margin: "0 0 12px 0",
+            }}
+          >
+            NEW SEASON DEALS
+          </p>
+
+          <h1
+            style={{
+              fontSize: "42px",
+              fontWeight: 800,
+              margin: "0 0 16px 0",
+            }}
+          >
+            Discover the Best Tech for Everyday Life
+          </h1>
+
+          <p
+            style={{
+              fontSize: "16px",
+              color: "#dbeafe",
+              margin: "0 0 24px 0",
+            }}
+          >
+            Explore premium devices and exclusive discounts.
+          </p>
+
+          <div style={{ display: "flex", gap: "12px" }}>
+            <button
+              style={{
+                padding: "14px 20px",
+                borderRadius: "12px",
+                border: "none",
+                backgroundColor: "#ffffff",
+                color: "#111827",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              Shop Now
+            </button>
+
+            <button
+              style={{
+                padding: "14px 20px",
+                borderRadius: "12px",
+                border: "1px solid rgba(255,255,255,0.3)",
+                backgroundColor: "transparent",
+                color: "#ffffff",
+                cursor: "pointer",
+              }}
+            >
+              View Offers
+            </button>
+          </div>
+        </div>
+
+        <img
+          src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=1000"
+          alt="Featured product"
+          style={{
+            maxHeight: "280px",
+            borderRadius: "18px",
+          }}
+        />
       </section>
 
-      {/* Products */}
+      
+
+      {/* Popular Items */}
       <section style={{ marginTop: "40px" }}>
         <h2
           style={{
@@ -82,7 +195,7 @@ export default function Home() {
             marginBottom: "20px",
           }}
         >
-          Products
+          Popular Items
         </h2>
 
         <div
@@ -92,7 +205,7 @@ export default function Home() {
             flexWrap: "wrap",
           }}
         >
-          {products.map((product) => (
+          {popularProducts.map((product) => (
             <ProductCard
               key={product.id}
               id={product.id}
@@ -107,6 +220,64 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* Discounted Items */}
+      <section style={{ marginTop: "56px" }}>
+        <h2
+          style={{
+            fontSize: "28px",
+            fontWeight: 700,
+            color: "#111827",
+            marginBottom: "20px",
+          }}
+        >
+          Discounted Items
+        </h2>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "20px",
+            flexWrap: "wrap",
+          }}
+        >
+          {discountedProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              id={product.id}
+              name={product.name}
+              price={product.price}
+              image={product.image}
+              category={product.category}
+              subcategories={product.subcategories}
+              description={product.description}
+              ratings={product.ratings}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer
+        style={{
+          marginTop: "64px",
+          padding: "24px 0 40px 0",
+          borderTop: "1px solid #e5e7eb",
+          color: "#6b7280",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "12px",
+        }}
+      >
+        <span>© 2026 TeknoCS. All rights reserved.</span>
+        <div style={{ display: "flex", gap: "18px" }}>
+          <span style={{ cursor: "pointer" }}>Privacy</span>
+          <span style={{ cursor: "pointer" }}>Terms</span>
+          <span style={{ cursor: "pointer" }}>Contact</span>
+        </div>
+      </footer>
     </div>
   );
 }

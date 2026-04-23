@@ -25,46 +25,114 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {/* MAIN HEADER */}
+      <body
+        className={`${geistSans.variable} ${geistMono.variable}`}
+        style={{ margin: 0, backgroundColor: "#ffffff", color: "#111827" }}
+      >
         <header
           style={{
             borderBottom: "1px solid #e5e7eb",
             backgroundColor: "#ffffff",
           }}
+        ><div
+        style={{
+          maxWidth: "1200px",
+          margin: "0 auto",
+          padding: "20px 24px",
+          display: "grid",
+          gridTemplateColumns: "170px 1fr 48px",
+          alignItems: "center",
+          gap: "24px",
+        }}
+      >
+        <div
+          style={{
+            width: "170px",
+            height: "60px",
+            position: "relative",
+          }}
         >
+          <Image
+            src="/MainLogo.png"
+            alt="Main Logo"
+            fill
+            sizes="170px"
+            style={{ objectFit: "contain" }}
+            priority
+          />
+        </div>
+
+        <div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    transform: "translateX(-40px)", // sola kaydırır
+  }}
+>
+      
+        
           <div
             style={{
-              maxWidth: "1200px",
-              margin: "0 auto",
-              padding: "20px 24px",
+              width: "100%",
+              maxWidth: "620px",
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
+              border: "1px solid #d1d5db",
+              borderRadius: "14px",
+              padding: "0 14px",
+              backgroundColor: "#ffffff",
             }}
           >
-            <div
+            <input
+              type="text"
+              placeholder="Search products..."
               style={{
-                width: "170px",
-                height: "60px",
-                position: "relative",
+                flex: 1,
+                padding: "14px 10px",
+                border: "none",
+                outline: "none",
+                fontSize: "15px",
+                backgroundColor: "transparent",
+              }}
+            />
+            <span
+              style={{
+                fontSize: "18px",
+                color: "#6b7280",
+                cursor: "pointer",
               }}
             >
-              <Image
-                src="/MainLogo.png"
-                alt="Main Logo"
-                fill
-                sizes="170px"
-                style={{ objectFit: "contain" }}
-                priority
-              />
-            </div>
-
-            <div style={{ width: "170px" }} />
+              🔍
+            </span>
           </div>
+        </div>
+      
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+          }}
+        >
+          <button
+            style={{
+              border: "none",
+              backgroundColor: "transparent",
+              fontSize: "24px",
+              cursor: "pointer",
+              color: "#111827",
+              padding: 0,
+            }}
+          >
+            👤
+          </button>
+        </div>
+      </div>
+
+          
         </header>
 
-        {/* CATEGORY NAVIGATION BAR */}
         <nav
           style={{
             borderBottom: "1px solid #e5e7eb",

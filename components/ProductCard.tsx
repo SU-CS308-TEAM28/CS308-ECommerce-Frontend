@@ -26,7 +26,7 @@ type ProductCardProps = {
     return (
       <div
         style={{
-          width: "320px",
+          width: "280px",
           minHeight: "520px",
           border: "1px solid #e5e7eb",
           borderRadius: "20px",
@@ -79,7 +79,7 @@ type ProductCardProps = {
               color: "#4b5563",
               margin: "0 0 14px 0",
               lineHeight: "1.5",
-              minHeight: "66px",
+              minHeight: "60px",
             }}
           >
             {description}
