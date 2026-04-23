@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import ProductCard from '../../components/ProductCard';
 
 const PRODUCTS = [
@@ -93,33 +96,71 @@ const PRODUCTS = [
   },
 ];
 
+const CATEGORIES = ['All', 'Phones', 'Tablets', 'Computers', 'TVs', 'Accessories', 'Smart Devices'];
+
 export default function ProductsPage() {
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const filtered = selectedCategory === 'All'
+    ? PRODUCTS
+    : PRODUCTS.filter((p) => p.category === selectedCategory);
+
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
-      <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#111827', margin: '0 0 24px 0' }}>
-        All Products
+      <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#111827', margin: '0 0 28px 0' }}>
+        {selectedCategory === 'All' ? 'All Products' : selectedCategory}
       </h1>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-          gap: '20px',
-        }}
-      >
-        {PRODUCTS.map((product) => (
-          <ProductCard
-            key={product.id}
-            id={product.id}
-            name={product.name}
-            price={product.price}
-            image={product.image}
-            category={product.category}
-            subcategories={product.subcategories}
-            description={product.description}
-            ratings={product.ratings}
-          />
-        ))}
+      <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
+        {/* Sidebar */}
+        <aside style={{ width: '200px', flexShrink: 0, backgroundColor: '#f9fafb', borderRadius: '16px', padding: '20px', border: '1px solid #e5e7eb' }}>
+          <p style={{ fontSize: '13px', fontWeight: 600, color: '#6b7280', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Categories
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  backgroundColor: selectedCategory === cat ? '#111827' : 'transparent',
+                  color: selectedCategory === cat ? '#ffffff' : '#374151',
+                  fontSize: '14px',
+                  fontWeight: selectedCategory === cat ? 600 : 400,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        {/* Product grid */}
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 16px 0' }}>
+            {filtered.length} product{filtered.length !== 1 ? 's' : ''} found
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
+            {filtered.map((product) => (
+              <ProductCard
+                key={product.id}
+                id={product.id}
+                name={product.name}
+                price={product.price}
+                image={product.image}
+                category={product.category}
+                subcategories={product.subcategories}
+                description={product.description}
+                ratings={product.ratings}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
