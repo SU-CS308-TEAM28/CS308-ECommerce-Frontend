@@ -1,65 +1,283 @@
-import Image from "next/image";
+import ProductCard from "../components/ProductCard";
 
 export default function Home() {
+  const popularProducts = [
+    {
+      id: "1",
+      name: "Apple iPad Air (5th Generation) 64GB",
+      price: 599,
+      image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800",
+      category: "Tablets",
+      subcategories: ["Education", "Graphics & Drawing", "iOS"],
+      description:
+        "M1 chip power, 10.9-inch Liquid Retina display, Wi-Fi connectivity.",
+      ratings: {
+        count: 204,
+        value: 4.8,
+      },
+    },
+    {
+      id: "2",
+      name: "Apple iPhone 15 Pro Max 256GB",
+      price: 1199,
+      image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800",
+      category: "Phones",
+      subcategories: ["Smartphones", "iOS"],
+      description:
+        "Titanium design, A17 Pro chip, 48MP camera, 5x optical zoom.",
+      ratings: {
+        count: 450,
+        value: 4.8,
+      },
+    },
+    {
+      id: "3",
+      name: "Dell XPS 15 9530",
+      price: 2800,
+      image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800",
+      category: "Computers",
+      subcategories: ["Laptops", "Design"],
+      description: "Intel Core i9, 32GB RAM, 1TB SSD, RTX 4070 graphics.",
+      ratings: {
+        count: 89,
+        value: 4.7,
+      },
+    },
+  ];
+
+  const discountedProducts = [
+    {
+      id: "4",
+      name: 'Samsung 65" Neo QLED 4K TV',
+      price: 34999,
+      image: "https://images.unsplash.com/photo-1593784991095-a205069470b6?w=800",
+      category: "TVs",
+      subcategories: ["4K", "Smart TV"],
+      description: "Crisp 4K image quality with vibrant colors and immersive sound.",
+      ratings: {
+        count: 91,
+        value: 4.6,
+      },
+    },
+    {
+      id: "5",
+      name: "Sony WH-1000XM5 Headphones",
+      price: 12999,
+      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800",
+      category: "Accessories",
+      subcategories: ["Audio", "Wireless"],
+      description: "Premium noise-cancelling headphones with long battery life.",
+      ratings: {
+        count: 176,
+        value: 4.9,
+      },
+    },
+    {
+      id: "6",
+      name: "Apple Watch Series 9",
+      price: 15499,
+      image: "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=800",
+      category: "Smart Devices",
+      subcategories: ["Wearables", "iOS"],
+      description: "Smart fitness tracking, sleek design, and smooth iPhone integration.",
+      ratings: {
+        count: 132,
+        value: 4.7,
+      },
+    },
+  ];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            Welcome to Tech Store
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div
+      style={{
+        maxWidth: "1200px",
+        margin: "0 auto",
+        padding: "24px",
+        backgroundColor: "#ffffff",
+      }}
+    >
+            {/* Carousel */}
+      <section
+        style={{
+          height: "360px",
+          borderRadius: "20px",
+          background: "linear-gradient(135deg, #0f172a, #1e3a8a)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "40px",
+          color: "#ffffff",
+          overflow: "hidden",
+          gap: "24px",
+        }}
+      >
+        <div style={{ maxWidth: "520px" }}>
+          <p
+            style={{
+              fontSize: "14px",
+              fontWeight: 600,
+              color: "#93c5fd",
+              margin: "0 0 12px 0",
+            }}
+          >
+            NEW SEASON DEALS
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+          <h1
+            style={{
+              fontSize: "42px",
+              fontWeight: 800,
+              margin: "0 0 16px 0",
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            Discover the Best Tech for Everyday Life
+          </h1>
+
+          <p
+            style={{
+              fontSize: "16px",
+              color: "#dbeafe",
+              margin: "0 0 24px 0",
+            }}
+          >
+            Explore premium devices and exclusive discounts.
+          </p>
+
+          <div style={{ display: "flex", gap: "12px" }}>
+            <button
+              style={{
+                padding: "14px 20px",
+                borderRadius: "12px",
+                border: "none",
+                backgroundColor: "#ffffff",
+                color: "#111827",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              Shop Now
+            </button>
+
+            <button
+              style={{
+                padding: "14px 20px",
+                borderRadius: "12px",
+                border: "1px solid rgba(255,255,255,0.3)",
+                backgroundColor: "transparent",
+                color: "#ffffff",
+                cursor: "pointer",
+              }}
+            >
+              View Offers
+            </button>
+          </div>
+        </div>
+
+        <img
+          src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=1000"
+          alt="Featured product"
+          style={{
+            maxHeight: "280px",
+            borderRadius: "18px",
+          }}
+        />
+      </section>
+
+      
+
+      {/* Popular Items */}
+      <section style={{ marginTop: "40px" }}>
+        <h2
+          style={{
+            fontSize: "28px",
+            fontWeight: 700,
+            color: "#111827",
+            marginBottom: "20px",
+          }}
+        >
+          Popular Items
+        </h2>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "20px",
+            flexWrap: "wrap",
+          }}
+        >
+          {popularProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              id={product.id}
+              name={product.name}
+              price={product.price}
+              image={product.image}
+              category={product.category}
+              subcategories={product.subcategories}
+              description={product.description}
+              ratings={product.ratings}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          ))}
         </div>
-      </main>
+      </section>
+
+      {/* Discounted Items */}
+      <section style={{ marginTop: "56px" }}>
+        <h2
+          style={{
+            fontSize: "28px",
+            fontWeight: 700,
+            color: "#111827",
+            marginBottom: "20px",
+          }}
+        >
+          Discounted Items
+        </h2>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "20px",
+            flexWrap: "wrap",
+          }}
+        >
+          {discountedProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              id={product.id}
+              name={product.name}
+              price={product.price}
+              image={product.image}
+              category={product.category}
+              subcategories={product.subcategories}
+              description={product.description}
+              ratings={product.ratings}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer
+        style={{
+          marginTop: "64px",
+          padding: "24px 0 40px 0",
+          borderTop: "1px solid #e5e7eb",
+          color: "#6b7280",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "12px",
+        }}
+      >
+        <span>© 2026 TeknoCS. All rights reserved.</span>
+        <div style={{ display: "flex", gap: "18px" }}>
+          <span style={{ cursor: "pointer" }}>Privacy</span>
+          <span style={{ cursor: "pointer" }}>Terms</span>
+          <span style={{ cursor: "pointer" }}>Contact</span>
+        </div>
+      </footer>
     </div>
   );
 }
