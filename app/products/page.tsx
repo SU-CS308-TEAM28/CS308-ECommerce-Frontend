@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ProductCard, { Product } from '../../components/ProductCard';
 
 const CATEGORIES = [
@@ -35,6 +36,7 @@ function getInitialSearch(): string {
 }
 
 export default function ProductsPage() {
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -45,12 +47,13 @@ export default function ProductsPage() {
   const [sortBy, setSortBy] = useState('popular');
   const [page] = useState(0);
   const PAGE_SIZE = 12;
+  console.log(searchParams);
 
   // Read URL params on mount
   useEffect(() => {
     setSelectedCategory(getInitialCategory());
     setSearchQuery(getInitialSearch());
-  }, []);
+  }, [searchParams]);
 
   const getSortParams = () => {
     if (sortBy === 'price_asc') return { sort: 'price', order: 'asc' };
@@ -106,6 +109,7 @@ export default function ProductsPage() {
       const reverseMap: Record<string, string> = {
         PHONES: 'phones', TABLETS: 'tablets', COMPUTERS: 'computers', TVs: 'tvs', Home: 'home',
       };
+      url.searchParams.delete('q');
       url.searchParams.set('c', reverseMap[value] ?? value.toLowerCase());
     } else {
       url.searchParams.delete('c');
