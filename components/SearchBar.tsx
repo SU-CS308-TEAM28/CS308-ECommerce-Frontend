@@ -11,6 +11,7 @@ export default function SearchBar() {
     const q = query.trim();
     if (q) router.push(`/products?q=${encodeURIComponent(q)}`);
     else router.push('/products');
+    setQuery('');
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
