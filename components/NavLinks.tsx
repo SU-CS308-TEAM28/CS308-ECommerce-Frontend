@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 
 const NAV_LINKS = [
@@ -30,7 +31,7 @@ export default function NavLinks() {
       }}
     >
       {NAV_LINKS.map((link) => (
-        <a
+        <Link
           key={link.href}
           href={link.href}
           style={{
@@ -43,7 +44,7 @@ export default function NavLinks() {
           onMouseLeave={() => setHovered(null)}
         >
           {link.label}
-        </a>
+        </Link>
       ))}
     </div>
   );

@@ -1,25 +1,24 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ProductCard, { Product } from '../../components/ProductCard';
 
 const CATEGORIES = [
   { label: 'All', value: '' },
-  { label: 'Phones', value: 'PHONES' },
-  { label: 'Tablets', value: 'TABLETS' },
   { label: 'Computers', value: 'COMPUTERS' },
+  { label: 'Tablets', value: 'TABLETS' },
+  { label: 'Phones', value: 'PHONES' },
   { label: 'TVs', value: 'TVs' },
-  { label: 'Accessories', value: 'Accessories' },
-  { label: 'Smart Devices', value: 'Smart Devices' },
+  { label: 'Home & Living', value: 'HOME_AND_LIVING' }
 ];
 
 const CATEGORY_PARAM_MAP: Record<string, string> = {
-  phones: 'PHONES',
-  tablets: 'TABLETS',
   computers: 'COMPUTERS',
+  tablets: 'TABLETS',
+  phones: 'PHONES',
   tvs: 'TVs',
-  home: 'Home',
+  home: 'HOME_AND_LIVING',
 };
 
 function getInitialCategory(): string {
@@ -37,6 +36,7 @@ function getInitialSearch(): string {
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -47,7 +47,6 @@ export default function ProductsPage() {
   const [sortBy, setSortBy] = useState('popular');
   const [page] = useState(0);
   const PAGE_SIZE = 12;
-  console.log(searchParams);
 
   // Read URL params on mount
   useEffect(() => {
@@ -58,7 +57,6 @@ export default function ProductsPage() {
   const getSortParams = () => {
     if (sortBy === 'price_asc') return { sort: 'price', order: 'asc' };
     if (sortBy === 'price_desc') return { sort: 'price', order: 'desc' };
-    if (sortBy === 'rating') return { sort: 'ratings.value', order: 'desc' };
     return { sort: 'ratings.count', order: 'desc' };
   };
 
@@ -72,8 +70,8 @@ export default function ProductsPage() {
         sort,
         order,
       });
-      if (selectedCategory) params.set('category', selectedCategory);
-      if (searchQuery) params.set('search', searchQuery);
+      if (searchParams.get('c')) params.set('category', CATEGORY_PARAM_MAP[searchParams.get('c')!] ?? '');
+      if (searchParams.get('q')) params.set('search', searchParams.get('q')!);
 
       const res = await fetch(`/api/product/products?${params.toString()}`);
       const json = await res.json();
@@ -95,7 +93,7 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory, searchQuery, sortBy, priceMin, priceMax, page]);
+  }, [searchParams, sortBy, priceMin, priceMax, page]);
 
   useEffect(() => {
     fetchProducts();
@@ -107,14 +105,14 @@ export default function ProductsPage() {
     const url = new URL(window.location.href);
     if (value) {
       const reverseMap: Record<string, string> = {
-        PHONES: 'phones', TABLETS: 'tablets', COMPUTERS: 'computers', TVs: 'tvs', Home: 'home',
+        PHONES: 'phones', TABLETS: 'tablets', COMPUTERS: 'computers', TVs: 'tvs', HOME_AND_LIVING: 'home',
       };
       url.searchParams.delete('q');
       url.searchParams.set('c', reverseMap[value] ?? value.toLowerCase());
     } else {
       url.searchParams.delete('c');
     }
-    window.history.pushState({}, '', url.toString());
+    router.push(url.toString());
   };
 
   const categoryLabel = CATEGORIES.find((c) => c.value === selectedCategory)?.label ?? 'All';
@@ -188,7 +186,6 @@ export default function ProductsPage() {
               <option value="popular">Most Popular</option>
               <option value="price_asc">Price: Low to High</option>
               <option value="price_desc">Price: High to Low</option>
-              <option value="rating">Highest Rated</option>
             </select>
           </div>
 
