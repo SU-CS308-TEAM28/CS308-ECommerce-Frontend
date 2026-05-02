@@ -16,6 +16,7 @@ export type Product = {
   imageUrls: string[];
   category: string;
   subcategories: string[];
+  stock: number | null;
   ratings: {
     count: number;
     value: number;
@@ -83,9 +84,11 @@ export default function ProductCard({ product }: ProductCardProps) {
       ? product.price * (1 - product.activeDiscount / 100)
       : null;
 
+  const isOutOfStock = product.stock !== null && product.stock !== undefined && product.stock === 0;
+
   return (
     <div
-      onClick={() => router.push(`/product/${product.id}`)}
+      onClick={() => !isOutOfStock && router.push(`/product/${product.id}`)}
       style={{
         width: '280px',
         minHeight: '480px',
@@ -97,17 +100,17 @@ export default function ProductCard({ product }: ProductCardProps) {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        cursor: 'pointer',
+        cursor: isOutOfStock ? 'default' : 'pointer',
         transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+        opacity: isOutOfStock ? 0.7 : 1,
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.boxShadow =
-          '0 16px 40px rgba(0, 0, 0, 0.18)';
+        if (isOutOfStock) return;
+        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 16px 40px rgba(0, 0, 0, 0.18)';
         (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.boxShadow =
-          '0 8px 24px rgba(0, 0, 0, 0.08)';
+        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.08)';
         (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
       }}
     >
@@ -121,6 +124,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             objectFit: 'cover',
             borderRadius: '14px',
             marginBottom: '16px',
+            filter: isOutOfStock ? 'grayscale(60%)' : 'none',
           }}
         />
 
@@ -207,24 +211,25 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       <button
         onClick={(e) => e.stopPropagation()}
+        disabled={isOutOfStock}
         style={{
           width: '100%',
           padding: '14px 16px',
           borderRadius: '12px',
           border: 'none',
-          backgroundColor: '#374151',
-          color: '#ffffff',
+          backgroundColor: isOutOfStock ? '#d1d5db' : '#374151',
+          color: isOutOfStock ? '#9ca3af' : '#ffffff',
           fontSize: '15px',
           fontWeight: 600,
-          cursor: 'pointer',
+          cursor: isOutOfStock ? 'not-allowed' : 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: '8px',
         }}
       >
-        <span style={{ fontSize: '20px' }}>🛒</span>
-        <span>Add to Cart</span>
+        <span style={{ fontSize: '20px' }}>{isOutOfStock ? '🚫' : '🛒'}</span>
+        <span>{isOutOfStock ? 'Out of Stock' : 'Add to Cart'}</span>
       </button>
     </div>
   );
