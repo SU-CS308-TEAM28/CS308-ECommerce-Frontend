@@ -72,6 +72,8 @@ export default function ProductsPage() {
       });
       if (searchParams.get('c')) params.set('category', CATEGORY_PARAM_MAP[searchParams.get('c')!] ?? '');
       if (searchParams.get('q')) params.set('search', searchParams.get('q')!);
+      if (priceMin !== '') params.set('minPrice', priceMin);
+      if (priceMax !== '') params.set('maxPrice', priceMax);
 
       const res = await fetch(`/api/product/products?${params.toString()}`);
       const json = await res.json();
@@ -79,14 +81,8 @@ export default function ProductsPage() {
       const raw = json?.data?.products;
       const arr: Product[] = Array.isArray(raw) ? raw : [];
 
-      const filtered = arr.filter((p) => {
-        if (priceMin !== '' && p.price < Number(priceMin)) return false;
-        if (priceMax !== '' && p.price > Number(priceMax)) return false;
-        return true;
-      });
-
-      setProducts(filtered);
-      setTotalCount(filtered.length);
+      setProducts(arr);
+      setTotalCount(arr.length);
     } catch (err) {
       console.error('Failed to fetch products:', err);
       setProducts([]);
@@ -151,11 +147,12 @@ export default function ProductsPage() {
             ))}
           </div>
 
-          <div style={{ marginTop: '24px' }}>
-            <p style={{ fontSize: '13px', fontWeight: 600, color: '#6b7280', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Price (₺)
-            </p>
-            <input
+          {(searchParams.get('q')) || (searchParams.get('c')) && (
+            <div style={{ marginTop: '24px' }}>
+              <p style={{ fontSize: '13px', fontWeight: 600, color: '#6b7280', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Price (₺)
+              </p>
+              <input
               type="number"
               placeholder="Min"
               value={priceMin}
@@ -170,6 +167,7 @@ export default function ProductsPage() {
               style={{ width: '100%', padding: '9px 12px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
+          )}
         </aside>
 
         {/* Product grid */}
