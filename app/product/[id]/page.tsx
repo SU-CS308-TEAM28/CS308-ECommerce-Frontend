@@ -38,6 +38,99 @@ function SkeletonDetail() {
           <div className="sk" style={{ height: '16px', width: '80%' }} />
         </div>
       </div>
+
+      {/* User Ratings Section */}
+      <div style={{ marginTop: '56px', borderTop: '2px solid #e5e7eb', paddingTop: '40px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+          <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#111827', margin: 0 }}>User Ratings</h2>
+          <button
+            onClick={() => setShowCommentModal(true)}
+            style={{
+              padding: '10px 20px', borderRadius: '10px', border: '1px solid #d1d5db',
+              backgroundColor: '#ffffff', color: '#374151', fontSize: '14px', fontWeight: 600,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+            }}
+          >
+            ✏️ Write a Review
+          </button>
+        </div>
+
+        <div style={{ textAlign: 'center', padding: '48px 0', color: '#9ca3af' }}>
+          <p style={{ fontSize: '40px', margin: '0 0 12px 0' }}>💬</p>
+          <p style={{ fontSize: '15px', margin: 0 }}>No reviews yet. Be the first to review this product!</p>
+        </div>
+      </div>
+
+      {/* Comment Modal */}
+      {showCommentModal && (
+        <div
+          onClick={() => setShowCommentModal(false)}
+          style={{
+            position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#ffffff', borderRadius: '20px', padding: '32px',
+              width: '480px', maxWidth: '90vw', boxShadow: '0 24px 60px rgba(0,0,0,0.15)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>Write a Review</h3>
+              <button
+                onClick={() => setShowCommentModal(false)}
+                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280', padding: 0 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>
+                  Your Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter your name"
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: '10px',
+                    border: '1px solid #d1d5db', fontSize: '14px', outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>
+                  Your Review
+                </label>
+                <textarea
+                  placeholder="Share your thoughts about this product..."
+                  rows={4}
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: '10px',
+                    border: '1px solid #d1d5db', fontSize: '14px', outline: 'none',
+                    boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit',
+                  }}
+                />
+              </div>
+
+              <button
+                style={{
+                  width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
+                  backgroundColor: '#111827', color: '#fff', fontSize: '15px', fontWeight: 700,
+                  cursor: 'pointer', marginTop: '8px',
+                }}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -120,6 +213,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showCommentModal, setShowCommentModal] = useState(false);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -337,6 +431,99 @@ export default function ProductDetailPage() {
 
         </div>
       </div>
+
+      {/* User Ratings Section */}
+      <div style={{ marginTop: '56px', borderTop: '2px solid #e5e7eb', paddingTop: '40px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+          <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#111827', margin: 0 }}>User Ratings</h2>
+          <button
+            onClick={() => setShowCommentModal(true)}
+            style={{
+              padding: '10px 20px', borderRadius: '10px', border: '1px solid #d1d5db',
+              backgroundColor: '#ffffff', color: '#374151', fontSize: '14px', fontWeight: 600,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+            }}
+          >
+            ✏️ Write a Review
+          </button>
+        </div>
+
+        <div style={{ textAlign: 'center', padding: '48px 0', color: '#9ca3af' }}>
+          <p style={{ fontSize: '40px', margin: '0 0 12px 0' }}>💬</p>
+          <p style={{ fontSize: '15px', margin: 0 }}>No reviews yet. Be the first to review this product!</p>
+        </div>
+      </div>
+
+      {/* Comment Modal */}
+      {showCommentModal && (
+        <div
+          onClick={() => setShowCommentModal(false)}
+          style={{
+            position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#ffffff', borderRadius: '20px', padding: '32px',
+              width: '480px', maxWidth: '90vw', boxShadow: '0 24px 60px rgba(0,0,0,0.15)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>Write a Review</h3>
+              <button
+                onClick={() => setShowCommentModal(false)}
+                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280', padding: 0 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>
+                  Your Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter your name"
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: '10px',
+                    border: '1px solid #d1d5db', fontSize: '14px', outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>
+                  Your Review
+                </label>
+                <textarea
+                  placeholder="Share your thoughts about this product..."
+                  rows={4}
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: '10px',
+                    border: '1px solid #d1d5db', fontSize: '14px', outline: 'none',
+                    boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit',
+                  }}
+                />
+              </div>
+
+              <button
+                style={{
+                  width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
+                  backgroundColor: '#111827', color: '#fff', fontSize: '15px', fontWeight: 700,
+                  cursor: 'pointer', marginTop: '8px',
+                }}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
