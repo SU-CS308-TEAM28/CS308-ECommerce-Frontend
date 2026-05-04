@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import ProductCard, { Product } from '../components/ProductCard';
+import Link from 'next/link';
 
 function ProductSlider({ title, products, loading }: { title: string; products: Product[]; loading: boolean }) {
   const [slide, setSlide] = useState(0);
@@ -137,18 +138,18 @@ export default function Home() {
             Explore premium devices and exclusive discounts.
           </p>
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              onClick={() => window.location.href = '/products'}
+            <Link
+              href="/products"
               style={{ padding: '14px 20px', borderRadius: '12px', border: 'none', backgroundColor: '#ffffff', color: '#111827', fontWeight: 700, cursor: 'pointer' }}
             >
               Shop Now
-            </button>
-            <button
-              onClick={() => window.location.href = '/products'}
+            </Link>
+            <Link
+              href="/products?c=discounts"
               style={{ padding: '14px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.3)', backgroundColor: 'transparent', color: '#ffffff', cursor: 'pointer' }}
             >
               View Offers
-            </button>
+            </Link>
           </div>
         </div>
         <img
