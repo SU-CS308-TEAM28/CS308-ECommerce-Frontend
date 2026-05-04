@@ -42,6 +42,75 @@ function SkeletonDetail() {
   );
 }
 
+function StockBadge({ stock }: { stock: number | null | undefined }) {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  if (stock === null || stock === undefined) return null;
+
+  const isOut = stock === 0;
+  const isLow = stock > 0 && stock <= 5;
+  const isOk = stock > 5;
+
+  const color = isOut ? '#ef4444' : isLow ? '#f59e0b' : '#16a34a';
+  const bgColor = isOut ? '#fef2f2' : isLow ? '#fefce8' : '#f0fdf4';
+  const label = isOut ? 'Out of Stock' : isLow ? 'Running out of stock' : 'In Stock';
+  const tooltipText = isOut
+    ? 'This product is currently out of stock.'
+    : `Currently there are ${stock} items left.`;
+
+  return (
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <span
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '5px',
+          padding: '4px 12px',
+          borderRadius: '20px',
+          backgroundColor: bgColor,
+          color: color,
+          fontSize: '13px',
+          fontWeight: 600,
+          cursor: 'default',
+          userSelect: 'none',
+        }}
+      >
+        <span style={{ fontSize: '8px' }}>●</span>
+        {label}
+      </span>
+      {showTooltip && (
+        <div style={{
+          position: 'absolute',
+          bottom: '130%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#1f2937',
+          color: '#fff',
+          padding: '6px 12px',
+          borderRadius: '8px',
+          fontSize: '12px',
+          whiteSpace: 'nowrap',
+          zIndex: 10,
+          pointerEvents: 'none',
+        }}>
+          {tooltipText}
+          <div style={{
+            position: 'absolute',
+            top: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            borderWidth: '5px',
+            borderStyle: 'solid',
+            borderColor: '#1f2937 transparent transparent transparent',
+          }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -62,8 +131,6 @@ export default function ProductDetailPage() {
         const p: Product = json?.data;
         if (!p) { setNotFound(true); return; }
         setProduct(p);
-
-        // Combine thumbnailUrl + imageUrls, deduplicate
         const allImages = Array.from(new Set([
           ...(p.thumbnailUrl ? [p.thumbnailUrl] : []),
           ...(p.imageUrls ?? []),
@@ -105,10 +172,10 @@ export default function ProductDetailPage() {
     ? product.price * (1 - product.activeDiscount / 100)
     : null;
 
+  const isOutOfStock = product.stock !== null && product.stock !== undefined && product.stock === 0;
+
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 24px' }}>
-
-      {/* Back */}
       <button
         onClick={() => router.back()}
         style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', color: '#6b7280', fontSize: '14px', cursor: 'pointer', marginBottom: '32px', padding: 0 }}
@@ -124,7 +191,10 @@ export default function ProductDetailPage() {
             <img
               src={selectedImage || 'https://via.placeholder.com/600x420?text=No+Image'}
               alt={product.name}
-              style={{ width: '100%', height: '420px', objectFit: 'cover', display: 'block' }}
+              style={{
+                width: '100%', height: '420px', objectFit: 'cover', display: 'block',
+                filter: isOutOfStock ? 'grayscale(60%)' : 'none',
+              }}
             />
           </div>
 
@@ -185,15 +255,30 @@ export default function ProductDetailPage() {
             )}
           </div>
 
+          {/* Stock Badge */}
+          <StockBadge stock={product.stock} />
+
           {/* Add to Cart */}
-          <button style={{
-            padding: '16px 24px', borderRadius: '14px', border: 'none',
-            backgroundColor: '#111827', color: '#fff', fontSize: '16px', fontWeight: 700,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-            width: '100%',
-          }}>
-            🛒 Add to Cart
-          </button>
+          {isOutOfStock ? (
+            <div>
+              <button disabled style={{
+                width: '100%', padding: '16px 24px', borderRadius: '14px', border: 'none',
+                backgroundColor: '#d1d5db', color: '#9ca3af', fontSize: '16px', fontWeight: 700,
+                cursor: 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+              }}>
+                🚫 Out of Stock
+              </button>
+            </div>
+          ) : (
+            <button style={{
+              padding: '16px 24px', borderRadius: '14px', border: 'none',
+              backgroundColor: '#111827', color: '#fff', fontSize: '16px', fontWeight: 700,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+              width: '100%',
+            }}>
+              🛒 Add to Cart
+            </button>
+          )}
 
           {/* Description */}
           <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '24px' }}>
