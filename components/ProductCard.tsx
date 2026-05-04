@@ -88,7 +88,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div
-      onClick={() => !isOutOfStock && router.push(`/product/${product.id}`)}
+      onClick={() => router.push(`/product/${product.id}`)}
       style={{
         width: '280px',
         minHeight: '480px',
@@ -100,7 +100,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        cursor: isOutOfStock ? 'default' : 'pointer',
+        cursor: 'pointer',
         transition: 'box-shadow 0.2s ease, transform 0.2s ease',
         opacity: isOutOfStock ? 0.7 : 1,
       }}

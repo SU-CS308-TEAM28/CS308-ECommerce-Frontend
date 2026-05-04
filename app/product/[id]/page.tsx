@@ -260,10 +260,7 @@ export default function ProductDetailPage() {
 
           {/* Add to Cart */}
           {isOutOfStock ? (
-            <div style={{ position: 'relative' }}>
-              <p style={{ fontSize: '13px', color: '#ef4444', fontWeight: 600, margin: '0 0 6px 0' }}>
-                ✕ This product is currently out of stock
-              </p>
+            <div>
               <button disabled style={{
                 width: '100%', padding: '16px 24px', borderRadius: '14px', border: 'none',
                 backgroundColor: '#d1d5db', color: '#9ca3af', fontSize: '16px', fontWeight: 700,
