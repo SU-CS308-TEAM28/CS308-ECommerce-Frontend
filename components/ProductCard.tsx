@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../context/AuthContext';
 
 export type Product = {
   id: string;
@@ -74,6 +75,7 @@ function SkeletonCard() {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
+  const { user } = useAuth();
 
   if (!product) return <SkeletonCard />;
 
