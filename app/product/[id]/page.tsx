@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Product } from '../../../components/ProductCard';
-import { useAuth } from '../../../context/AuthContext';
 
 function SkeletonDetail() {
   return (
@@ -65,7 +64,7 @@ function SkeletonDetail() {
       {/* Comment Modal */}
       {showCommentModal && (
         <div
-          onClick={() => setShowCommentModal(false)}
+          onClick={() => { setShowCommentModal(false); setCommentSuccess(false); setCommentError(''); }}
           style={{
             position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
@@ -81,54 +80,116 @@ function SkeletonDetail() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>Write a Review</h3>
               <button
-                onClick={() => setShowCommentModal(false)}
+                onClick={() => { setShowCommentModal(false); setCommentSuccess(false); setCommentError(''); }}
                 style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280', padding: 0 }}
               >
                 ✕
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>
-                  Your Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter your name"
-                  style={{
-                    width: '100%', padding: '10px 14px', borderRadius: '10px',
-                    border: '1px solid #d1d5db', fontSize: '14px', outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
+            {commentSuccess ? (
+              <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                <p style={{ fontSize: '40px', margin: '0 0 12px 0' }}>✅</p>
+                <p style={{ fontSize: '16px', fontWeight: 600, color: '#111827', margin: '0 0 8px 0' }}>Review submitted!</p>
+                <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>Your review is waiting for approval.</p>
               </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>
-                  Your Review
-                </label>
-                <textarea
-                  placeholder="Share your thoughts about this product..."
-                  rows={4}
-                  style={{
-                    width: '100%', padding: '10px 14px', borderRadius: '10px',
-                    border: '1px solid #d1d5db', fontSize: '14px', outline: 'none',
-                    boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit',
+                {/* Star Rating */}
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '8px' }}>
+                    Rating
+                  </label>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span
+                        key={star}
+                        onClick={() => setCommentRate(star)}
+                        style={{
+                          fontSize: '28px', cursor: 'pointer',
+                          color: star <= commentRate ? '#f59e0b' : '#d1d5db',
+                          transition: 'color 0.15s',
+                        }}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Review Text */}
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>
+                    Your Review
+                  </label>
+                  <textarea
+                    placeholder="Share your thoughts about this product..."
+                    rows={4}
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    style={{
+                      width: '100%', padding: '10px 14px', borderRadius: '10px',
+                      border: '1px solid #d1d5db', fontSize: '14px', outline: 'none',
+                      boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit',
+                    }}
+                  />
+                </div>
+
+                {/* Show Name Checkbox */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => setIsNameShown(!isNameShown)}>
+                  <div style={{
+                    width: '20px', height: '20px', borderRadius: '6px', border: '2px solid #d1d5db',
+                    backgroundColor: isNameShown ? '#111827' : '#ffffff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    {isNameShown && <span style={{ color: '#fff', fontSize: '12px' }}>✓</span>}
+                  </div>
+                  <span style={{ fontSize: '14px', color: '#374151' }}>Show my name publicly</span>
+                </div>
+
+                {commentError && (
+                  <p style={{ fontSize: '13px', color: '#ef4444', margin: 0 }}>{commentError}</p>
+                )}
+
+                <button
+                  onClick={async () => {
+                    if (!commentText.trim()) { setCommentError('Please write a review.'); return; }
+                    setCommentLoading(true);
+                    setCommentError('');
+                    try {
+                      const res = await fetch(`/api/product/product/${id}/comments/add`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ rate: commentRate, comment: commentText, isNameShown }),
+                      });
+                      if (res.ok) {
+                        setCommentSuccess(true);
+                        setCommentText('');
+                        setCommentRate(5);
+                        setIsNameShown(true);
+                      } else {
+                        const json = await res.json();
+                        setCommentError(json?.message || 'Failed to submit review.');
+                      }
+                    } catch {
+                      setCommentError('Could not connect to server.');
+                    } finally {
+                      setCommentLoading(false);
+                    }
                   }}
-                />
+                  disabled={commentLoading}
+                  style={{
+                    width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
+                    backgroundColor: commentLoading ? '#6b7280' : '#111827',
+                    color: '#fff', fontSize: '15px', fontWeight: 700,
+                    cursor: commentLoading ? 'not-allowed' : 'pointer', marginTop: '8px',
+                  }}
+                >
+                  {commentLoading ? 'Submitting...' : 'Submit'}
+                </button>
               </div>
-
-              <button
-                style={{
-                  width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
-                  backgroundColor: '#111827', color: '#fff', fontSize: '15px', fontWeight: 700,
-                  cursor: 'pointer', marginTop: '8px',
-                }}
-              >
-                Submit
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}
@@ -209,13 +270,18 @@ export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
-  const { user } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showCommentModal, setShowCommentModal] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [commentRate, setCommentRate] = useState(5);
+  const [isNameShown, setIsNameShown] = useState(true);
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [commentSuccess, setCommentSuccess] = useState(false);
+  const [commentError, setCommentError] = useState('');
 
   useEffect(() => {
     async function fetchProduct() {
@@ -459,7 +525,7 @@ export default function ProductDetailPage() {
       {/* Comment Modal */}
       {showCommentModal && (
         <div
-          onClick={() => setShowCommentModal(false)}
+          onClick={() => { setShowCommentModal(false); setCommentSuccess(false); setCommentError(''); }}
           style={{
             position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
@@ -475,54 +541,116 @@ export default function ProductDetailPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>Write a Review</h3>
               <button
-                onClick={() => setShowCommentModal(false)}
+                onClick={() => { setShowCommentModal(false); setCommentSuccess(false); setCommentError(''); }}
                 style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280', padding: 0 }}
               >
                 ✕
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>
-                  Your Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter your name"
-                  style={{
-                    width: '100%', padding: '10px 14px', borderRadius: '10px',
-                    border: '1px solid #d1d5db', fontSize: '14px', outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
+            {commentSuccess ? (
+              <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                <p style={{ fontSize: '40px', margin: '0 0 12px 0' }}>✅</p>
+                <p style={{ fontSize: '16px', fontWeight: 600, color: '#111827', margin: '0 0 8px 0' }}>Review submitted!</p>
+                <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>Your review is waiting for approval.</p>
               </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>
-                  Your Review
-                </label>
-                <textarea
-                  placeholder="Share your thoughts about this product..."
-                  rows={4}
-                  style={{
-                    width: '100%', padding: '10px 14px', borderRadius: '10px',
-                    border: '1px solid #d1d5db', fontSize: '14px', outline: 'none',
-                    boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit',
+                {/* Star Rating */}
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '8px' }}>
+                    Rating
+                  </label>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span
+                        key={star}
+                        onClick={() => setCommentRate(star)}
+                        style={{
+                          fontSize: '28px', cursor: 'pointer',
+                          color: star <= commentRate ? '#f59e0b' : '#d1d5db',
+                          transition: 'color 0.15s',
+                        }}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Review Text */}
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>
+                    Your Review
+                  </label>
+                  <textarea
+                    placeholder="Share your thoughts about this product..."
+                    rows={4}
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    style={{
+                      width: '100%', padding: '10px 14px', borderRadius: '10px',
+                      border: '1px solid #d1d5db', fontSize: '14px', outline: 'none',
+                      boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit',
+                    }}
+                  />
+                </div>
+
+                {/* Show Name Checkbox */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => setIsNameShown(!isNameShown)}>
+                  <div style={{
+                    width: '20px', height: '20px', borderRadius: '6px', border: '2px solid #d1d5db',
+                    backgroundColor: isNameShown ? '#111827' : '#ffffff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    {isNameShown && <span style={{ color: '#fff', fontSize: '12px' }}>✓</span>}
+                  </div>
+                  <span style={{ fontSize: '14px', color: '#374151' }}>Show my name publicly</span>
+                </div>
+
+                {commentError && (
+                  <p style={{ fontSize: '13px', color: '#ef4444', margin: 0 }}>{commentError}</p>
+                )}
+
+                <button
+                  onClick={async () => {
+                    if (!commentText.trim()) { setCommentError('Please write a review.'); return; }
+                    setCommentLoading(true);
+                    setCommentError('');
+                    try {
+                      const res = await fetch(`/api/product/product/${id}/comments/add`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ rate: commentRate, comment: commentText, isNameShown }),
+                      });
+                      if (res.ok) {
+                        setCommentSuccess(true);
+                        setCommentText('');
+                        setCommentRate(5);
+                        setIsNameShown(true);
+                      } else {
+                        const json = await res.json();
+                        setCommentError(json?.message || 'Failed to submit review.');
+                      }
+                    } catch {
+                      setCommentError('Could not connect to server.');
+                    } finally {
+                      setCommentLoading(false);
+                    }
                   }}
-                />
+                  disabled={commentLoading}
+                  style={{
+                    width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
+                    backgroundColor: commentLoading ? '#6b7280' : '#111827',
+                    color: '#fff', fontSize: '15px', fontWeight: 700,
+                    cursor: commentLoading ? 'not-allowed' : 'pointer', marginTop: '8px',
+                  }}
+                >
+                  {commentLoading ? 'Submitting...' : 'Submit'}
+                </button>
               </div>
-
-              <button
-                style={{
-                  width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
-                  backgroundColor: '#111827', color: '#fff', fontSize: '15px', fontWeight: 700,
-                  cursor: 'pointer', marginTop: '8px',
-                }}
-              >
-                Submit
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}
