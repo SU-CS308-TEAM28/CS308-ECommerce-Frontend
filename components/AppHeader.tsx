@@ -5,9 +5,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import SearchBar from './SearchBar';
 import NavLinks from './NavLinks';
+import { useAuth } from '../context/AuthContext';
 
 export default function AppHeader() {
   const pathname = usePathname();
+  const { user } = useAuth();
   
   // Disable header and nav on login and register pages
   const isAuthPage = pathname === '/login' || pathname === '/register';
@@ -46,7 +48,7 @@ export default function AppHeader() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-            <Link href="/profile" style={{ fontSize: '24px', color: '#111827', textDecoration: 'none' }}>
+            <Link href={user ? "/profile" : "/login"} style={{ fontSize: '24px', color: '#111827', textDecoration: 'none' }}>
               👤
             </Link>
           </div>

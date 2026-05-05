@@ -45,8 +45,6 @@ export default function LoginPage() {
         data = { message: responseText };
       }
 
-      console.log("Login response:", data);
-
       if (response.ok) {
         if (data.data.user) {
           login(data.data.user);
