@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Product } from '../../../components/ProductCard';
+import { useAuth } from '../../../context/AuthContext';
 
 function SkeletonDetail() {
   return (
@@ -115,6 +116,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
+  const { user } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);

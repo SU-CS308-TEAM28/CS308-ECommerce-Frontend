@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "../../context/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -11,6 +12,7 @@ export default function LoginPage() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { login } = useAuth();
 
   const handleLogin = async () => {
     setError("");
@@ -46,8 +48,8 @@ export default function LoginPage() {
       console.log("Login response:", data);
 
       if (response.ok) {
-        if (data.token) {
-          document.cookie = `token=${data.token}; path=/`;
+        if (data.data.user) {
+          login(data.data.user);
         }
 
         const redirectPath = searchParams.get("redirect");
