@@ -55,10 +55,83 @@ function SkeletonDetail() {
           </button>
         </div>
 
-        <div style={{ textAlign: 'center', padding: '48px 0', color: '#9ca3af' }}>
-          <p style={{ fontSize: '40px', margin: '0 0 12px 0' }}>💬</p>
-          <p style={{ fontSize: '15px', margin: 0 }}>No reviews yet. Be the first to review this product!</p>
-        </div>
+        {commentsLoading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {[1,2,3].map(i => (
+              <div key={i} style={{ padding: '20px', borderRadius: '14px', border: '1px solid #e5e7eb' }}>
+                <div style={{ width: '120px', height: '14px', backgroundColor: '#f0f0f0', borderRadius: '8px', marginBottom: '8px' }} />
+                <div style={{ width: '80px', height: '14px', backgroundColor: '#f0f0f0', borderRadius: '8px', marginBottom: '12px' }} />
+                <div style={{ width: '100%', height: '14px', backgroundColor: '#f0f0f0', borderRadius: '8px' }} />
+              </div>
+            ))}
+          </div>
+        ) : comments.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '48px 0', color: '#9ca3af' }}>
+            <p style={{ fontSize: '40px', margin: '0 0 12px 0' }}>💬</p>
+            <p style={{ fontSize: '15px', margin: 0 }}>No reviews yet. Be the first to review this product!</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {comments.map((comment: any, i: number) => (
+              <div key={comment.id ?? i} style={{
+                padding: '20px 24px', borderRadius: '14px',
+                border: '1px solid #e5e7eb', backgroundColor: '#fafafa',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                  <div>
+                    <p style={{ fontSize: '15px', fontWeight: 700, color: '#111827', margin: '0 0 4px 0' }}>
+                      {comment.commenter?.publicName ?? 'Anonymous'}
+                    </p>
+                    <div style={{ display: 'flex', gap: '2px' }}>
+                      {[1,2,3,4,5].map(star => (
+                        <span key={star} style={{ fontSize: '14px', color: star <= comment.rate ? '#f59e0b' : '#d1d5db' }}>★</span>
+                      ))}
+                    </div>
+                  </div>
+                  {comment.creationDate && (
+                    <span style={{ fontSize: '13px', color: '#9ca3af' }}>
+                      {new Date(comment.creationDate).toLocaleDateString('tr-TR')}
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontSize: '14px', color: '#4b5563', lineHeight: 1.7, margin: 0 }}>{comment.comment}</p>
+              </div>
+            ))}
+
+            {/* Pagination */}
+            {commentsTotalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '8px' }}>
+                <button
+                  onClick={() => setCommentsPage(p => Math.max(0, p - 1))}
+                  disabled={commentsPage === 0}
+                  style={{
+                    padding: '8px 16px', borderRadius: '8px', border: '1px solid #e5e7eb',
+                    backgroundColor: commentsPage === 0 ? '#f9fafb' : '#111827',
+                    color: commentsPage === 0 ? '#9ca3af' : '#fff',
+                    cursor: commentsPage === 0 ? 'not-allowed' : 'pointer', fontSize: '14px',
+                  }}
+                >
+                  ‹ Prev
+                </button>
+                <span style={{ padding: '8px 16px', fontSize: '14px', color: '#6b7280' }}>
+                  {commentsPage + 1} / {commentsTotalPages}
+                </span>
+                <button
+                  onClick={() => setCommentsPage(p => Math.min(commentsTotalPages - 1, p + 1))}
+                  disabled={commentsPage === commentsTotalPages - 1}
+                  style={{
+                    padding: '8px 16px', borderRadius: '8px', border: '1px solid #e5e7eb',
+                    backgroundColor: commentsPage === commentsTotalPages - 1 ? '#f9fafb' : '#111827',
+                    color: commentsPage === commentsTotalPages - 1 ? '#9ca3af' : '#fff',
+                    cursor: commentsPage === commentsTotalPages - 1 ? 'not-allowed' : 'pointer', fontSize: '14px',
+                  }}
+                >
+                  Next ›
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Comment Modal */}
@@ -276,6 +349,10 @@ export default function ProductDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showCommentModal, setShowCommentModal] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(true);
+  const [commentsPage, setCommentsPage] = useState(0);
+  const [commentsTotalPages, setCommentsTotalPages] = useState(0);
   const [commentText, setCommentText] = useState('');
   const [commentRate, setCommentRate] = useState(5);
   const [isNameShown, setIsNameShown] = useState(true);
@@ -307,6 +384,23 @@ export default function ProductDetailPage() {
     }
     if (id) fetchProduct();
   }, [id]);
+
+  useEffect(() => {
+    async function fetchComments() {
+      setCommentsLoading(true);
+      try {
+        const res = await fetch(`/api/product/product/${id}/comments?page=${commentsPage}`);
+        const json = await res.json();
+        setComments(json?.data?.comments ?? []);
+        setCommentsTotalPages(json?.data?.pageCount ?? 0);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setCommentsLoading(false);
+      }
+    }
+    if (id) fetchComments();
+  }, [id, commentsPage]);
 
   if (loading) return <SkeletonDetail />;
 
@@ -516,10 +610,83 @@ export default function ProductDetailPage() {
           </button>
         </div>
 
-        <div style={{ textAlign: 'center', padding: '48px 0', color: '#9ca3af' }}>
-          <p style={{ fontSize: '40px', margin: '0 0 12px 0' }}>💬</p>
-          <p style={{ fontSize: '15px', margin: 0 }}>No reviews yet. Be the first to review this product!</p>
-        </div>
+        {commentsLoading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {[1,2,3].map(i => (
+              <div key={i} style={{ padding: '20px', borderRadius: '14px', border: '1px solid #e5e7eb' }}>
+                <div style={{ width: '120px', height: '14px', backgroundColor: '#f0f0f0', borderRadius: '8px', marginBottom: '8px' }} />
+                <div style={{ width: '80px', height: '14px', backgroundColor: '#f0f0f0', borderRadius: '8px', marginBottom: '12px' }} />
+                <div style={{ width: '100%', height: '14px', backgroundColor: '#f0f0f0', borderRadius: '8px' }} />
+              </div>
+            ))}
+          </div>
+        ) : comments.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '48px 0', color: '#9ca3af' }}>
+            <p style={{ fontSize: '40px', margin: '0 0 12px 0' }}>💬</p>
+            <p style={{ fontSize: '15px', margin: 0 }}>No reviews yet. Be the first to review this product!</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {comments.map((comment: any, i: number) => (
+              <div key={comment.id ?? i} style={{
+                padding: '20px 24px', borderRadius: '14px',
+                border: '1px solid #e5e7eb', backgroundColor: '#fafafa',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                  <div>
+                    <p style={{ fontSize: '15px', fontWeight: 700, color: '#111827', margin: '0 0 4px 0' }}>
+                      {comment.commenter?.publicName ?? 'Anonymous'}
+                    </p>
+                    <div style={{ display: 'flex', gap: '2px' }}>
+                      {[1,2,3,4,5].map(star => (
+                        <span key={star} style={{ fontSize: '14px', color: star <= comment.rate ? '#f59e0b' : '#d1d5db' }}>★</span>
+                      ))}
+                    </div>
+                  </div>
+                  {comment.creationDate && (
+                    <span style={{ fontSize: '13px', color: '#9ca3af' }}>
+                      {new Date(comment.creationDate).toLocaleDateString('tr-TR')}
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontSize: '14px', color: '#4b5563', lineHeight: 1.7, margin: 0 }}>{comment.comment}</p>
+              </div>
+            ))}
+
+            {/* Pagination */}
+            {commentsTotalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '8px' }}>
+                <button
+                  onClick={() => setCommentsPage(p => Math.max(0, p - 1))}
+                  disabled={commentsPage === 0}
+                  style={{
+                    padding: '8px 16px', borderRadius: '8px', border: '1px solid #e5e7eb',
+                    backgroundColor: commentsPage === 0 ? '#f9fafb' : '#111827',
+                    color: commentsPage === 0 ? '#9ca3af' : '#fff',
+                    cursor: commentsPage === 0 ? 'not-allowed' : 'pointer', fontSize: '14px',
+                  }}
+                >
+                  ‹ Prev
+                </button>
+                <span style={{ padding: '8px 16px', fontSize: '14px', color: '#6b7280' }}>
+                  {commentsPage + 1} / {commentsTotalPages}
+                </span>
+                <button
+                  onClick={() => setCommentsPage(p => Math.min(commentsTotalPages - 1, p + 1))}
+                  disabled={commentsPage === commentsTotalPages - 1}
+                  style={{
+                    padding: '8px 16px', borderRadius: '8px', border: '1px solid #e5e7eb',
+                    backgroundColor: commentsPage === commentsTotalPages - 1 ? '#f9fafb' : '#111827',
+                    color: commentsPage === commentsTotalPages - 1 ? '#9ca3af' : '#fff',
+                    cursor: commentsPage === commentsTotalPages - 1 ? 'not-allowed' : 'pointer', fontSize: '14px',
+                  }}
+                >
+                  Next ›
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Comment Modal */}
