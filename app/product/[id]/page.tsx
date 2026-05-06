@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Product } from '../../../components/ProductCard';
+import { useAuth } from '../../../context/AuthContext';
 
 function SkeletonDetail() {
   return (
@@ -96,6 +97,8 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const id = params?.id as string;
 
+  const { user } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -328,7 +331,7 @@ export default function ProductDetailPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
           <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#111827', margin: 0 }}>User Ratings</h2>
           <button
-            onClick={() => setShowCommentModal(true)}
+            onClick={() => user ? setShowCommentModal(true) : setShowAuthModal(true)}
             style={{
               padding: '10px 20px', borderRadius: '10px', border: '1px solid #d1d5db',
               backgroundColor: '#ffffff', color: '#374151', fontSize: '14px', fontWeight: 600,
@@ -412,6 +415,53 @@ export default function ProductDetailPage() {
           </div>
         )}
       </div>
+
+      {showAuthModal && (
+        <div
+          onClick={() => setShowAuthModal(false)}
+          style={{
+            position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#ffffff', borderRadius: '20px', padding: '32px',
+              width: '400px', maxWidth: '90vw', boxShadow: '0 24px 60px rgba(0,0,0,0.15)',
+              textAlign: 'center',
+            }}
+          >
+            <p style={{ fontSize: '32px', margin: '0 0 16px 0' }}>🔒</p>
+            <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>
+              Login Required
+            </h3>
+            <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 24px 0' }}>
+              You have to login or register first to write a review.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => { setShowAuthModal(false); window.location.href = '/login'; }}
+                style={{
+                  padding: '12px 28px', borderRadius: '12px', border: 'none',
+                  backgroundColor: '#111827', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                Login
+              </button>
+              <button
+                onClick={() => { setShowAuthModal(false); window.location.href = '/register'; }}
+                style={{
+                  padding: '12px 28px', borderRadius: '12px', border: '1px solid #d1d5db',
+                  backgroundColor: '#ffffff', color: '#374151', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                Register
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCommentModal && (
         <div
