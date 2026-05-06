@@ -27,7 +27,7 @@ export default function AppHeader() {
             margin: '0 auto',
             padding: '20px 24px',
             display: 'grid',
-            gridTemplateColumns: '170px 1fr 48px',
+            gridTemplateColumns: '170px 1fr auto',
             alignItems: 'center',
             gap: '24px',
           }}
@@ -47,10 +47,19 @@ export default function AppHeader() {
             <SearchBar />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+          {/* ICONS (Cart + User) */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '16px' }}>
+            
+            {/* Shopping Cart */}
+            <Link href="/shopping-cart" style={{ fontSize: '24px', color: '#111827', textDecoration: 'none' }}>
+              🛒
+            </Link>
+
+            {/* User */}
             <Link href={user ? "/profile" : "/login"} style={{ fontSize: '24px', color: '#111827', textDecoration: 'none' }}>
               👤
             </Link>
+
           </div>
         </div>
       </header>
