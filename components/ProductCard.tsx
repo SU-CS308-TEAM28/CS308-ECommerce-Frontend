@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 
@@ -76,6 +77,7 @@ function SkeletonCard() {
 export default function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const [isAdding, setIsAdding] = useState(false);
 
   if (!product) return <SkeletonCard />;
 
@@ -87,6 +89,38 @@ export default function ProductCard({ product }: ProductCardProps) {
       : null;
 
   const isOutOfStock = product.stock !== null && product.stock !== undefined && product.stock === 0;
+
+  const handleAddToCart = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (isOutOfStock || isAdding) return;
+
+    setIsAdding(true);
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
+      const response = await fetch(`${apiBase}/api/user/shopping-cart/add`, {
+        method: 'POST',
+        credentials: 'include', // sends _TCS_AUTH and _TCS_CART cookies
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id }),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+
+      if (!response.ok) {
+        throw new Error(payload?.message || 'Failed to add item to cart');
+      }
+
+      router.push('/shopping-cart');
+    } catch (err) {
+      console.error('Add to cart failed:', err);
+      alert(err instanceof Error ? err.message : 'Failed to add item to cart');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const buttonDisabled = isOutOfStock || isAdding;
 
   return (
     <div
@@ -212,26 +246,30 @@ export default function ProductCard({ product }: ProductCardProps) {
       </div>
 
       <button
-        onClick={(e) => e.stopPropagation()}
-        disabled={isOutOfStock}
+        onClick={handleAddToCart}
+        disabled={buttonDisabled}
         style={{
           width: '100%',
           padding: '14px 16px',
           borderRadius: '12px',
           border: 'none',
-          backgroundColor: isOutOfStock ? '#d1d5db' : '#374151',
+          backgroundColor: isOutOfStock ? '#d1d5db' : isAdding ? '#6b7280' : '#374151',
           color: isOutOfStock ? '#9ca3af' : '#ffffff',
           fontSize: '15px',
           fontWeight: 600,
-          cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+          cursor: buttonDisabled ? 'not-allowed' : 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: '8px',
         }}
       >
-        <span style={{ fontSize: '20px' }}>{isOutOfStock ? '🚫' : '🛒'}</span>
-        <span>{isOutOfStock ? 'Out of Stock' : 'Add to Cart'}</span>
+        <span style={{ fontSize: '20px' }}>
+          {isOutOfStock ? '🚫' : isAdding ? '⏳' : '🛒'}
+        </span>
+        <span>
+          {isOutOfStock ? 'Out of Stock' : isAdding ? 'Adding…' : 'Add to Cart'}
+        </span>
       </button>
     </div>
   );
