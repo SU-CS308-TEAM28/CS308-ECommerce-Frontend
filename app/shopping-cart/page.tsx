@@ -54,8 +54,7 @@ function normalizeCartItems(rawData: any): CartItem[] {
     );
 
     const discountedPrice =
-      Number(product?.discountedPrice ?? item?.discountedPrice ?? 0) ||
-      Math.max(price - discountAmount, 0);
+      Number(product?.discountedPrice ?? item?.discountedPrice ?? 0) || price * (1 - discountAmount / 100);
 
     const stock = Number(product?.stock ?? item?.stock ?? 0);
 
@@ -266,7 +265,7 @@ export default function ShoppingCartPage() {
 
   return (
     <main style={styles.container}>
-      <h1 style={styles.title}>Shopping Cart ({itemCount})</h1>
+      <h1 style={styles.title}>Shopping Cart ({itemCount} items)</h1>
 
       {error && <div style={styles.errorBox}>{error}</div>}
 
@@ -350,12 +349,12 @@ export default function ShoppingCartPage() {
                     <div style={styles.priceBox}>
                       {item.price !== item.discountedPrice && (
                         <div style={styles.oldPrice}>
-                          ${item.price.toFixed(2)}
+                          ₺{item.price.toFixed(2)}
                         </div>
                       )}
 
                       <div style={styles.price}>
-                        ${item.discountedPrice.toFixed(2)}
+                        ₺{item.discountedPrice.toFixed(2)}
                       </div>
                     </div>
 
@@ -378,11 +377,11 @@ export default function ShoppingCartPage() {
 
           <section style={styles.summary}>
             <div style={styles.normalTotal}>
-              Normal Price: <strong>${normalTotal.toFixed(2)}</strong>
+              Normal Price: <strong>₺{normalTotal.toFixed(2)}</strong>
             </div>
 
             <div style={styles.discountedTotal}>
-              Discounted Total: <strong>${discountedTotal.toFixed(2)}</strong>
+              Discounted Total: <strong>₺{discountedTotal.toFixed(2)}</strong>
             </div>
 
             <button
