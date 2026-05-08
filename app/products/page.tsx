@@ -147,7 +147,7 @@ export default function ProductsPage() {
             ))}
           </div>
 
-          {(searchParams.get('q')) || (searchParams.get('c')) && (
+          {(searchParams.get('q')) !== null || (searchParams.get('c')) !== null && (
             <div style={{ marginTop: '24px' }}>
               <p style={{ fontSize: '13px', fontWeight: 600, color: '#6b7280', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Price (₺)
