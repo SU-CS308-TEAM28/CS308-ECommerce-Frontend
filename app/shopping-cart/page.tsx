@@ -336,6 +336,8 @@ export default function ShoppingCartPage() {
                   style={{
                     ...styles.row,
                     opacity: rowLoading ? 0.55 : 1,
+                    backgroundColor: item.stock < item.quantity ? "#db9a9a" : undefined,
+                    borderRadius: "15px",
                   }}
                 >
                   <div style={styles.leftSide}>
