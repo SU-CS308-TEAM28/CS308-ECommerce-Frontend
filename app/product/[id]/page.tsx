@@ -114,6 +114,7 @@ export default function ProductDetailPage() {
   const [commentsLoading, setCommentsLoading] = useState(true);
   const [commentsPage, setCommentsPage] = useState(0);
   const [commentsTotalPages, setCommentsTotalPages] = useState(0);
+  const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -184,6 +185,34 @@ export default function ProductDetailPage() {
     : null;
 
   const isOutOfStock = product.stock !== null && product.stock !== undefined && product.stock === 0;
+
+  const handleAddToCart = async () => {
+    if (isOutOfStock || isAdding) return;
+
+    setIsAdding(true);
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
+      const response = await fetch(`${apiBase}/api/user/shopping-cart/add`, {
+        method: 'POST',
+        credentials: 'include', // sends _TCS_AUTH and _TCS_CART cookies
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id }),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(payload?.message || 'Failed to add item to cart');
+      }
+
+      router.push('/shopping-cart');
+    } catch (err) {
+      console.error('Add to cart failed:', err);
+      alert(err instanceof Error ? err.message : 'Failed to add item to cart');
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 24px' }}>
@@ -267,12 +296,16 @@ export default function ProductDetailPage() {
               🚫 Out of Stock
             </button>
           ) : (
-            <button style={{
-              padding: '16px 24px', borderRadius: '14px', border: 'none',
-              backgroundColor: '#111827', color: '#fff', fontSize: '16px', fontWeight: 700,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', width: '100%',
-            }}>
-              🛒 Add to Cart
+            <button
+              onClick={handleAddToCart}
+              disabled={isAdding}
+              style={{
+                padding: '16px 24px', borderRadius: '14px', border: 'none',
+                backgroundColor: isAdding ? '#6b7280' : '#111827', color: '#fff', fontSize: '16px', fontWeight: 700,
+                cursor: isAdding ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', width: '100%',
+              }}
+            >
+              {isAdding ? '⏳ Adding…' : '🛒 Add to Cart'}
             </button>
           )}
 
