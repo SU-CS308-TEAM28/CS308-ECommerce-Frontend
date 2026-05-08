@@ -145,7 +145,7 @@ export default function ProductDetailPage() {
     async function fetchComments() {
       setCommentsLoading(true);
       try {
-        const res = await fetch(`/api/product/product/${id}/comments?page=${commentsPage}`);
+        const res = await fetch(`/api/product/${id}/comments?page=${commentsPage}`);
         const json = await res.json();
         setComments(json?.data?.comments ?? []);
         setCommentsTotalPages(json?.data?.pageCount ?? 0);
@@ -587,7 +587,7 @@ export default function ProductDetailPage() {
                     setCommentLoading(true);
                     setCommentError('');
                     try {
-                      const res = await fetch(`/api/product/product/${id}/comments/add`, {
+                      const res = await fetch(`/api/product/${id}/comments/add`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ rate: commentRate, comment: commentText, isNameShown }),
