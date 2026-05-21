@@ -220,18 +220,44 @@ export default function WishlistPage() {
                   opacity: rowLoading ? 0.55 : 1,
                 }}
               >
-                <div
-                  onClick={() => router.push(`/product/${item.productId}`)}
-                  style={{ cursor: "pointer" }}
-                >
+                <div style={{ position: "relative" }}>
                   <img
                     src={item.image}
                     alt={item.name}
+                    onClick={() => router.push(`/product/${item.productId}`)}
                     style={{
                       ...styles.image,
                       filter: isOutOfStock ? "grayscale(60%)" : "none",
+                      cursor: "pointer",
                     }}
                   />
+                  <button
+                    onClick={() => removeItem(item.productId)}
+                    disabled={rowLoading}
+                    title="Remove from wishlist"
+                    style={{
+                      position: "absolute",
+                      top: "10px",
+                      right: "10px",
+                      width: "36px",
+                      height: "36px",
+                      borderRadius: "50%",
+                      border: "none",
+                      backgroundColor: "rgba(255,255,255,0.88)",
+                      backdropFilter: "blur(4px)",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+                      fontSize: "16px",
+                      cursor: rowLoading ? "not-allowed" : "pointer",
+                      opacity: rowLoading ? 0.5 : 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "transform 0.15s, box-shadow 0.15s",
+                      zIndex: 1,
+                    }}
+                  >
+                    {isRemoving ? "..." : "🗑️"}
+                  </button>
                 </div>
 
                 <div style={styles.cardBody}>
@@ -296,19 +322,6 @@ export default function WishlistPage() {
                       : isAddingToCart
                       ? "Adding..."
                       : "Add to Cart"}
-                  </button>
-
-                  <button
-                    onClick={() => removeItem(item.productId)}
-                    disabled={rowLoading}
-                    style={{
-                      ...styles.removeButton,
-                      cursor: rowLoading ? "not-allowed" : "pointer",
-                      opacity: rowLoading ? 0.5 : 1,
-                    }}
-                    title="Remove from wishlist"
-                  >
-                    {isRemoving ? "..." : "🗑️"}
                   </button>
                 </div>
               </div>
@@ -429,13 +442,10 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 0,
   },
   cardActions: {
-    display: "flex",
-    gap: "8px",
     padding: "12px 16px 16px 16px",
-    alignItems: "center",
   },
   cartButton: {
-    flex: 1,
+    width: "100%",
     padding: "10px 12px",
     borderRadius: "10px",
     border: "none",
