@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 
@@ -80,6 +80,11 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [isWishlisting, setIsWishlisting] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
+
+  useEffect(() => {
+    const wishlist: { productId: string }[] = user?.userData?.wishlist ?? [];
+    setWishlisted(Array.isArray(wishlist) && wishlist.some((item) => item?.productId === (product?.id ?? '')));
+  }, [user, product?.id]);
 
   if (!product) return <SkeletonCard />;
 

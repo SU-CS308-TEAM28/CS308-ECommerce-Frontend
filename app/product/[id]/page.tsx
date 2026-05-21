@@ -119,6 +119,11 @@ export default function ProductDetailPage() {
   const [wishlisted, setWishlisted] = useState(false);
 
   useEffect(() => {
+    const wishlist: { productId: string }[] = user?.userData?.wishlist ?? [];
+    setWishlisted(Array.isArray(wishlist) && wishlist.some((item) => item?.productId === id));
+  }, [user, id]);
+
+  useEffect(() => {
     async function fetchProduct() {
       setLoading(true);
       try {
