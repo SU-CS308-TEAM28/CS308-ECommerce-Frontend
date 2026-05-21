@@ -78,6 +78,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [isAdding, setIsAdding] = useState(false);
+  const [isWishlisting, setIsWishlisting] = useState(false);
+  const [wishlisted, setWishlisted] = useState(false);
 
   if (!product) return <SkeletonCard />;
 
@@ -117,6 +119,32 @@ export default function ProductCard({ product }: ProductCardProps) {
       alert(err instanceof Error ? err.message : 'Failed to add item to cart');
     } finally {
       setIsAdding(false);
+    }
+  };
+
+  const handleAddToWishlist = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (isWishlisting) return;
+
+    setIsWishlisting(true);
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
+      const response = await fetch(`${apiBase}/api/user/wishlist/add`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id }),
+      });
+
+      if (response.ok) {
+        setWishlisted(true);
+      } else if (response.status === 401 || response.status === 403) {
+        router.push('/login');
+      }
+    } catch (err) {
+      console.error('Add to wishlist failed:', err);
+    } finally {
+      setIsWishlisting(false);
     }
   };
 
@@ -245,32 +273,54 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
       </div>
 
-      <button
-        onClick={handleAddToCart}
-        disabled={buttonDisabled}
-        style={{
-          width: '100%',
-          padding: '14px 16px',
-          borderRadius: '12px',
-          border: 'none',
-          backgroundColor: isOutOfStock ? '#d1d5db' : isAdding ? '#6b7280' : '#374151',
-          color: isOutOfStock ? '#9ca3af' : '#ffffff',
-          fontSize: '15px',
-          fontWeight: 600,
-          cursor: buttonDisabled ? 'not-allowed' : 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-        }}
-      >
-        <span style={{ fontSize: '20px' }}>
-          {isOutOfStock ? '🚫' : isAdding ? '⏳' : '🛒'}
-        </span>
-        <span>
-          {isOutOfStock ? 'Out of Stock' : isAdding ? 'Adding…' : 'Add to Cart'}
-        </span>
-      </button>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <button
+          onClick={handleAddToCart}
+          disabled={buttonDisabled}
+          style={{
+            flex: 1,
+            padding: '14px 16px',
+            borderRadius: '12px',
+            border: 'none',
+            backgroundColor: isOutOfStock ? '#d1d5db' : isAdding ? '#6b7280' : '#374151',
+            color: isOutOfStock ? '#9ca3af' : '#ffffff',
+            fontSize: '15px',
+            fontWeight: 600,
+            cursor: buttonDisabled ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+          }}
+        >
+          <span style={{ fontSize: '20px' }}>
+            {isOutOfStock ? '🚫' : isAdding ? '⏳' : '🛒'}
+          </span>
+          <span>
+            {isOutOfStock ? 'Out of Stock' : isAdding ? 'Adding…' : 'Add to Cart'}
+          </span>
+        </button>
+
+        <button
+          onClick={handleAddToWishlist}
+          disabled={isWishlisting || wishlisted}
+          title={wishlisted ? 'Added to wishlist' : 'Add to wishlist'}
+          style={{
+            width: '52px',
+            borderRadius: '12px',
+            border: '1px solid #e5e7eb',
+            backgroundColor: wishlisted ? '#fef2f2' : '#ffffff',
+            fontSize: '20px',
+            cursor: isWishlisting || wishlisted ? 'default' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          {wishlisted ? '❤️' : isWishlisting ? '⏳' : '🤍'}
+        </button>
+      </div>
     </div>
   );
 }

@@ -50,6 +50,11 @@ export default function AppHeader() {
           {/* ICONS (Cart + User) */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '16px' }}>
             
+            {/* Wishlist */}
+            <Link href="/wishlist" style={{ fontSize: '24px', color: '#111827', textDecoration: 'none' }}>
+              🤍
+            </Link>
+
             {/* Shopping Cart */}
             <Link href="/shopping-cart" style={{ fontSize: '24px', color: '#111827', textDecoration: 'none' }}>
               🛒
