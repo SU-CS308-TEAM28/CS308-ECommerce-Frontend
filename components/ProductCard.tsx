@@ -179,18 +179,56 @@ export default function ProductCard({ product }: ProductCardProps) {
       }}
     >
       <div>
-        <img
-          src={image || fallbackImage}
-          alt={product.name}
-          style={{
-            width: '100%',
-            height: '220px',
-            objectFit: 'cover',
-            borderRadius: '14px',
-            marginBottom: '16px',
-            filter: isOutOfStock ? 'grayscale(60%)' : 'none',
-          }}
-        />
+        <div style={{ position: 'relative', marginBottom: '16px' }}>
+          <img
+            src={image || fallbackImage}
+            alt={product.name}
+            style={{
+              width: '100%',
+              height: '220px',
+              objectFit: 'cover',
+              borderRadius: '14px',
+              display: 'block',
+              filter: isOutOfStock ? 'grayscale(60%)' : 'none',
+            }}
+          />
+          <button
+            onClick={handleAddToWishlist}
+            disabled={isWishlisting || wishlisted}
+            title={wishlisted ? 'Added to wishlist' : 'Add to wishlist'}
+            style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              border: 'none',
+              backgroundColor: 'rgba(255,255,255,0.88)',
+              backdropFilter: 'blur(4px)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+              fontSize: '18px',
+              cursor: isWishlisting || wishlisted ? 'default' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'transform 0.15s, box-shadow 0.15s',
+              zIndex: 1,
+            }}
+            onMouseEnter={(e) => {
+              if (!wishlisted && !isWishlisting) {
+                (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.15)';
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 14px rgba(0,0,0,0.22)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.18)';
+            }}
+          >
+            {wishlisted ? '❤️' : isWishlisting ? '⏳' : '🤍'}
+          </button>
+        </div>
 
         <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
           {product.category}
@@ -273,54 +311,32 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <button
-          onClick={handleAddToCart}
-          disabled={buttonDisabled}
-          style={{
-            flex: 1,
-            padding: '14px 16px',
-            borderRadius: '12px',
-            border: 'none',
-            backgroundColor: isOutOfStock ? '#d1d5db' : isAdding ? '#6b7280' : '#374151',
-            color: isOutOfStock ? '#9ca3af' : '#ffffff',
-            fontSize: '15px',
-            fontWeight: 600,
-            cursor: buttonDisabled ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-          }}
-        >
-          <span style={{ fontSize: '20px' }}>
-            {isOutOfStock ? '🚫' : isAdding ? '⏳' : '🛒'}
-          </span>
-          <span>
-            {isOutOfStock ? 'Out of Stock' : isAdding ? 'Adding…' : 'Add to Cart'}
-          </span>
-        </button>
-
-        <button
-          onClick={handleAddToWishlist}
-          disabled={isWishlisting || wishlisted}
-          title={wishlisted ? 'Added to wishlist' : 'Add to wishlist'}
-          style={{
-            width: '52px',
-            borderRadius: '12px',
-            border: '1px solid #e5e7eb',
-            backgroundColor: wishlisted ? '#fef2f2' : '#ffffff',
-            fontSize: '20px',
-            cursor: isWishlisting || wishlisted ? 'default' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          {wishlisted ? '❤️' : isWishlisting ? '⏳' : '🤍'}
-        </button>
-      </div>
+      <button
+        onClick={handleAddToCart}
+        disabled={buttonDisabled}
+        style={{
+          width: '100%',
+          padding: '14px 16px',
+          borderRadius: '12px',
+          border: 'none',
+          backgroundColor: isOutOfStock ? '#d1d5db' : isAdding ? '#6b7280' : '#374151',
+          color: isOutOfStock ? '#9ca3af' : '#ffffff',
+          fontSize: '15px',
+          fontWeight: 600,
+          cursor: buttonDisabled ? 'not-allowed' : 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+        }}
+      >
+        <span style={{ fontSize: '20px' }}>
+          {isOutOfStock ? '🚫' : isAdding ? '⏳' : '🛒'}
+        </span>
+        <span>
+          {isOutOfStock ? 'Out of Stock' : isAdding ? 'Adding…' : 'Add to Cart'}
+        </span>
+      </button>
     </div>
   );
 }
