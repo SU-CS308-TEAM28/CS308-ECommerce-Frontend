@@ -238,7 +238,7 @@ export default function OrdersPage() {
                     order.isCancelled ||
                     cancellingOrderId === order.id
                   }
-                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition"
                 >
                   {cancellingOrderId === order.id
                     ? "Cancelling..."
