@@ -108,6 +108,22 @@ export default function OrdersPage() {
       "https://placehold.co/80x80"
     );
   };
+  const formatPrice = (price: number) => {
+  return `$${price.toFixed(2)}`;
+};
+
+const getStatusClassName = (order: Order) => {
+  if (order.isCancelled) {
+    return "bg-red-100 text-red-700";
+  }
+
+  if (order.isCompleted) {
+    return "bg-green-100 text-green-700";
+  }
+
+  return "bg-yellow-100 text-yellow-700";
+};
+
 
   if (loading) {
     return (
@@ -141,14 +157,21 @@ export default function OrdersPage() {
                 <div>
                   <h2 className="text-xl font-semibold">Order #{order.id}</h2>
                   <p className="text-gray-600 mt-1">Date: {formatDate(order.orderDate)}</p>
-                  <p className="text-gray-600">Status: {order.status}</p>
+                  <div className="flex items-center gap-2 mt-1">
+  <span className="text-gray-600">Status:</span>
+  <span
+    className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusClassName(order)}`}
+  >
+    {order.status}
+  </span>
+</div>
                   {order.deliveryAddress && (
                     <p className="text-gray-600">Address: {order.deliveryAddress}</p>
                   )}
                 </div>
 
                 <div className="md:text-right">
-                  <p className="text-lg font-semibold">${order.totalPrice}</p>
+                  <p className="text-lg font-semibold">{formatPrice(order.totalPrice)}</p>
                   <p className="text-sm text-gray-500">Total Price</p>
                 </div>
               </div>
@@ -169,7 +192,7 @@ export default function OrdersPage() {
                       <div>
                         <p className="font-medium">{product.name}</p>
                         <p className="text-sm text-gray-500">Quantity: {product.quantity}</p>
-                        <p className="text-sm text-gray-500">Price: ${product.price}</p>
+                        <p className="text-sm text-gray-500">Price: {formatPrice(product.price)}</p>
                       </div>
                     </div>
 
