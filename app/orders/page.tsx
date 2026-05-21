@@ -27,7 +27,9 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     fetchOrders();
@@ -63,7 +65,9 @@ export default function OrdersPage() {
   };
 
   const handleCancelOrder = async (orderId: string) => {
-    const confirmed = window.confirm("Are you sure you want to cancel this order?");
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this order?"
+    );
 
     if (!confirmed) {
       return;
@@ -108,22 +112,22 @@ export default function OrdersPage() {
       "https://placehold.co/80x80"
     );
   };
+
   const formatPrice = (price: number) => {
-  return `$${price.toFixed(2)}`;
-};
+    return `$${price.toFixed(2)}`;
+  };
 
-const getStatusClassName = (order: Order) => {
-  if (order.isCancelled) {
-    return "bg-red-100 text-red-700";
-  }
+  const getStatusClassName = (order: Order) => {
+    if (order.isCancelled) {
+      return "bg-red-100 text-red-700";
+    }
 
-  if (order.isCompleted) {
-    return "bg-green-100 text-green-700";
-  }
+    if (order.isCompleted) {
+      return "bg-green-100 text-green-700";
+    }
 
-  return "bg-yellow-100 text-yellow-700";
-};
-
+    return "bg-yellow-100 text-yellow-700";
+  };
 
   if (loading) {
     return (
@@ -136,7 +140,9 @@ const getStatusClassName = (order: Order) => {
   return (
     <div className="min-h-screen bg-white px-6 py-8">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">My Orders ({orders.length})</h1>
+        <h1 className="text-3xl font-bold mb-8">
+          My Orders ({orders.length})
+        </h1>
 
         {error && (
           <div className="border border-red-200 bg-red-50 text-red-700 rounded-xl p-4 mb-6">
@@ -156,22 +162,33 @@ const getStatusClassName = (order: Order) => {
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-5">
                 <div>
                   <h2 className="text-xl font-semibold">Order #{order.id}</h2>
-                  <p className="text-gray-600 mt-1">Date: {formatDate(order.orderDate)}</p>
+
+                  <p className="text-gray-600 mt-1">
+                    Date: {formatDate(order.orderDate)}
+                  </p>
+
                   <div className="flex items-center gap-2 mt-1">
-  <span className="text-gray-600">Status:</span>
-  <span
-    className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusClassName(order)}`}
-  >
-    {order.status}
-  </span>
-</div>
+                    <span className="text-gray-600">Status:</span>
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusClassName(
+                        order
+                      )}`}
+                    >
+                      {order.status}
+                    </span>
+                  </div>
+
                   {order.deliveryAddress && (
-                    <p className="text-gray-600">Address: {order.deliveryAddress}</p>
+                    <p className="text-gray-600">
+                      Address: {order.deliveryAddress}
+                    </p>
                   )}
                 </div>
 
                 <div className="md:text-right">
-                  <p className="text-lg font-semibold">{formatPrice(order.totalPrice)}</p>
+                  <p className="text-lg font-semibold">
+                    {formatPrice(order.totalPrice)}
+                  </p>
                   <p className="text-sm text-gray-500">Total Price</p>
                 </div>
               </div>
@@ -191,15 +208,20 @@ const getStatusClassName = (order: Order) => {
 
                       <div>
                         <p className="font-medium">{product.name}</p>
-                        <p className="text-sm text-gray-500">Quantity: {product.quantity}</p>
-                        <p className="text-sm text-gray-500">Price: {formatPrice(product.price)}</p>
+                        <p className="text-sm text-gray-500">
+                          Quantity: {product.quantity}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Price: {formatPrice(product.price)}
+                        </p>
                       </div>
                     </div>
 
                     <div className="flex gap-3">
                       <button
                         onClick={handleRequestReturn}
-                        className="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
+                        disabled={!order.isCompleted || order.isCancelled}
+                        className="border border-gray-300 px-4 py-2 rounded-lg transition disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100"
                       >
                         Request Return
                       </button>
@@ -211,10 +233,16 @@ const getStatusClassName = (order: Order) => {
               <div className="border-t pt-4 flex justify-end">
                 <button
                   onClick={() => handleCancelOrder(order.id)}
-                  disabled={order.isCompleted || order.isCancelled || cancellingOrderId === order.id}
+                  disabled={
+                    order.isCompleted ||
+                    order.isCancelled ||
+                    cancellingOrderId === order.id
+                  }
                   className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
                 >
-                  {cancellingOrderId === order.id ? "Cancelling..." : "Cancel Order"}
+                  {cancellingOrderId === order.id
+                    ? "Cancelling..."
+                    : "Cancel Order"}
                 </button>
               </div>
             </div>
