@@ -40,7 +40,7 @@ export default function OrdersPage() {
       setLoading(true);
       setError("");
 
-      const response = await fetch("http://localhost:8080/api/order/orders", {
+      const response = await fetch("/api/order/orders", {
         credentials: "include",
       });
 
@@ -76,7 +76,7 @@ export default function OrdersPage() {
     try {
       setCancellingOrderId(orderId);
 
-      const response = await fetch(`http://localhost:8080/api/order/${orderId}`, {
+      const response = await fetch(`/api/order/${orderId}`, {
         method: "DELETE",
         credentials: "include",
       });
