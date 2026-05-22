@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 
@@ -78,6 +78,13 @@ export default function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [isAdding, setIsAdding] = useState(false);
+  const [isWishlisting, setIsWishlisting] = useState(false);
+  const [wishlisted, setWishlisted] = useState(false);
+
+  useEffect(() => {
+    const wishlist: { productId: string }[] = user?.userData?.wishlist ?? [];
+    setWishlisted(Array.isArray(wishlist) && wishlist.some((item) => item?.productId === (product?.id ?? '')));
+  }, [user, product?.id]);
 
   if (!product) return <SkeletonCard />;
 
@@ -120,6 +127,32 @@ export default function ProductCard({ product }: ProductCardProps) {
     }
   };
 
+  const handleAddToWishlist = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (isWishlisting) return;
+
+    setIsWishlisting(true);
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
+      const response = await fetch(`${apiBase}/api/user/wishlist/add`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id }),
+      });
+
+      if (response.ok) {
+        setWishlisted(true);
+      } else if (response.status === 401 || response.status === 403) {
+        router.push('/login');
+      }
+    } catch (err) {
+      console.error('Add to wishlist failed:', err);
+    } finally {
+      setIsWishlisting(false);
+    }
+  };
+
   const buttonDisabled = isOutOfStock || isAdding;
 
   return (
@@ -151,18 +184,60 @@ export default function ProductCard({ product }: ProductCardProps) {
       }}
     >
       <div>
-        <img
-          src={image || fallbackImage}
-          alt={product.name}
-          style={{
-            width: '100%',
-            height: '220px',
-            objectFit: 'cover',
-            borderRadius: '14px',
-            marginBottom: '16px',
-            filter: isOutOfStock ? 'grayscale(60%)' : 'none',
-          }}
-        />
+        <div style={{ position: 'relative', marginBottom: '16px' }}>
+          <img
+            src={image || fallbackImage}
+            alt={product.name}
+            style={{
+              width: '100%',
+              height: '220px',
+              objectFit: 'cover',
+              borderRadius: '14px',
+              display: 'block',
+              filter: isOutOfStock ? 'grayscale(60%)' : 'none',
+            }}
+          />
+          <button
+            onClick={handleAddToWishlist}
+            disabled={isWishlisting || wishlisted}
+            title={wishlisted ? 'Added to wishlist' : 'Add to wishlist'}
+            style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              border: 'none',
+              backgroundColor: 'rgba(255,255,255,0.88)',
+              backdropFilter: 'blur(4px)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+              fontSize: '18px',
+              cursor: isWishlisting || wishlisted ? 'default' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'transform 0.15s, box-shadow 0.15s',
+              zIndex: 1,
+            }}
+            onMouseEnter={(e) => {
+              if (!wishlisted && !isWishlisting) {
+                (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.15)';
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 14px rgba(0,0,0,0.22)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.18)';
+            }}
+          >
+            {isWishlisting ? '⏳' : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill={wishlisted ? '#ef4444' : 'none'} stroke={wishlisted ? '#ef4444' : '#374151'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            )}
+          </button>
+        </div>
 
         <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
           {product.category}

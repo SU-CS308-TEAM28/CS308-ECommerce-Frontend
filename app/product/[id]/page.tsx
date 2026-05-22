@@ -115,6 +115,13 @@ export default function ProductDetailPage() {
   const [commentsPage, setCommentsPage] = useState(0);
   const [commentsTotalPages, setCommentsTotalPages] = useState(0);
   const [isAdding, setIsAdding] = useState(false);
+  const [isWishlisting, setIsWishlisting] = useState(false);
+  const [wishlisted, setWishlisted] = useState(false);
+
+  useEffect(() => {
+    const wishlist: { productId: string }[] = user?.userData?.wishlist ?? [];
+    setWishlisted(Array.isArray(wishlist) && wishlist.some((item) => item?.productId === id));
+  }, [user, id]);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -214,6 +221,29 @@ export default function ProductDetailPage() {
     }
   };
 
+  const handleAddToWishlist = async () => {
+    if (isWishlisting || wishlisted) return;
+    setIsWishlisting(true);
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
+      const response = await fetch(`${apiBase}/api/user/wishlist/add`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id }),
+      });
+      if (response.ok) {
+        setWishlisted(true);
+      } else if (response.status === 401 || response.status === 403) {
+        setShowAuthModal(true);
+      }
+    } catch (err) {
+      console.error('Add to wishlist failed:', err);
+    } finally {
+      setIsWishlisting(false);
+    }
+  };
+
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 24px' }}>
       <button
@@ -287,27 +317,48 @@ export default function ProductDetailPage() {
 
           <StockBadge stock={product.stock} />
 
-          {isOutOfStock ? (
-            <button disabled style={{
-              width: '100%', padding: '16px 24px', borderRadius: '14px', border: 'none',
-              backgroundColor: '#d1d5db', color: '#9ca3af', fontSize: '16px', fontWeight: 700,
-              cursor: 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-            }}>
-              🚫 Out of Stock
-            </button>
-          ) : (
+          <div style={{ display: 'flex', gap: '12px' }}>
+            {isOutOfStock ? (
+              <button disabled style={{
+                flex: 1, padding: '16px 24px', borderRadius: '14px', border: 'none',
+                backgroundColor: '#d1d5db', color: '#9ca3af', fontSize: '16px', fontWeight: 700,
+                cursor: 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+              }}>
+                🚫 Out of Stock
+              </button>
+            ) : (
+              <button
+                onClick={handleAddToCart}
+                disabled={isAdding}
+                style={{
+                  flex: 1, padding: '16px 24px', borderRadius: '14px', border: 'none',
+                  backgroundColor: isAdding ? '#6b7280' : '#111827', color: '#fff', fontSize: '16px', fontWeight: 700,
+                  cursor: isAdding ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                }}
+              >
+                {isAdding ? '⏳ Adding…' : '🛒 Add to Cart'}
+              </button>
+            )}
+
             <button
-              onClick={handleAddToCart}
-              disabled={isAdding}
+              onClick={handleAddToWishlist}
+              disabled={isWishlisting || wishlisted}
+              title={wishlisted ? 'Added to wishlist' : 'Add to wishlist'}
               style={{
-                padding: '16px 24px', borderRadius: '14px', border: 'none',
-                backgroundColor: isAdding ? '#6b7280' : '#111827', color: '#fff', fontSize: '16px', fontWeight: 700,
-                cursor: isAdding ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', width: '100%',
+                width: '60px', borderRadius: '14px',
+                border: wishlisted ? '1px solid #fca5a5' : '1px solid #d1d5db',
+                backgroundColor: wishlisted ? '#fef2f2' : '#ffffff',
+                fontSize: '24px', cursor: isWishlisting || wishlisted ? 'default' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}
             >
-              {isAdding ? '⏳ Adding…' : '🛒 Add to Cart'}
+              {isWishlisting ? '⏳' : (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill={wishlisted ? '#ef4444' : 'none'} stroke={wishlisted ? '#ef4444' : '#374151'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              )}
             </button>
-          )}
+          </div>
 
           <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '24px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 12px 0' }}>Description</h3>
