@@ -30,6 +30,17 @@ type Category = {
   subCategories: Category[];
 };
 
+type Comment = {
+  id: string;
+  productId: string;
+  commenter: { id: string; publicName: string };
+  creationDate: string;
+  rate: number;
+  comment: string;
+  isApproved: boolean;
+  isChecked: boolean;
+};
+
 const emptyForm = {
   name: '',
   description: '',
@@ -49,7 +60,7 @@ const emptyForm = {
 export default function ProductManagerPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [activePanel, setActivePanel] = useState<'add' | 'remove'>('add');
+  const [activePanel, setActivePanel] = useState<'add' | 'remove' | 'comments'>('add');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
@@ -58,6 +69,8 @@ export default function ProductManagerPage() {
   const [formSuccess, setFormSuccess] = useState('');
   const [formError, setFormError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
 
   useEffect(() => {
     if (user && user.userType !== 'product_manager') {
@@ -71,7 +84,38 @@ export default function ProductManagerPage() {
 
   useEffect(() => {
     if (activePanel === 'remove') fetchProducts();
+    if (activePanel === 'comments') fetchComments();
   }, [activePanel]);
+
+  async function fetchComments() {
+    setLoadingComments(true);
+    try {
+      const res = await fetch('/api/product/awaiting-comments', { credentials: 'include' });
+      const json = await res.json();
+      setComments(json?.data ?? []);
+    } catch {} finally {
+      setLoadingComments(false);
+    }
+  }
+
+  async function handleCommentAction(comment: Comment, action: 'approve' | 'disapprove') {
+    try {
+      const res = await fetch(`/api/product/${comment.productId}/comments/${action}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commentId: comment.id }),
+      });
+      if (res.ok) {
+        setComments(prev => prev.filter(c => c.id !== comment.id));
+      } else {
+        const json = await res.json();
+        alert(json?.message || 'Failed to update comment.');
+      }
+    } catch {
+      alert('Could not connect to server.');
+    }
+  }
 
   async function fetchCategories() {
     try {
@@ -173,7 +217,7 @@ export default function ProductManagerPage() {
         <p style={{ fontSize: '11px', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 12px 0' }}>
           Product Manager
         </p>
-        {(['add', 'remove'] as const).map(panel => (
+        {(['add', 'remove', 'comments'] as const).map(panel => (
           <button
             key={panel}
             onClick={() => setActivePanel(panel)}
@@ -185,7 +229,7 @@ export default function ProductManagerPage() {
               cursor: 'pointer',
             }}
           >
-            {panel === 'add' ? '➕ Add Product' : '🗑️ Remove Product'}
+            {panel === 'add' ? '➕ Add Product' : panel === 'remove' ? '🗑️ Remove Product' : '💬 Comments'}
           </button>
         ))}
       </aside>
