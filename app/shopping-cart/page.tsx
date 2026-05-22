@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 type StockStatus = "In Stock" | "Running Out" | "Out of Stock";
 
@@ -93,10 +95,54 @@ async function safeReadJson(response: Response) {
 }
 
 export default function ShoppingCartPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [items, setItems] = useState<CartItem[]>([]);
+  const [checkoutModal, setCheckoutModal] = useState<'none' | 'auth' | 'profile' | 'card'>('none');
+  const [cardHolder, setCardHolder] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardCVV, setCardCVV] = useState('');
+  const [cardDueDate, setCardDueDate] = useState('');
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [orderError, setOrderError] = useState('');
   const [pageLoading, setPageLoading] = useState(true);
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [error, setError] = useState("");
+
+  const isProfileComplete = (u: any) =>
+    u && u.homeAddress && u.homeAddress.trim() !== '' && u.taxId && u.taxId.trim() !== '';
+
+  const handleCheckout = () => {
+    if (!user) { setCheckoutModal('auth'); return; }
+    if (!isProfileComplete(user)) { setCheckoutModal('profile'); return; }
+    setCheckoutModal('card');
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!cardHolder.trim() || !cardNumber.trim() || !cardCVV.trim() || !cardDueDate.trim()) {
+      setOrderError('Please fill in all card fields.');
+      return;
+    }
+    setOrderLoading(true);
+    setOrderError('');
+    try {
+      const res = await fetch('/api/order/place', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cardHolder, cardNumber, cardCVV, cardDueDate }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) { setOrderError(json?.message || 'Order could not be placed.'); return; }
+      const orderId = json?.data;
+      setCheckoutModal('none');
+      router.push(`/thank-you/${orderId}`);
+    } catch {
+      setOrderError('Could not connect to server.');
+    } finally {
+      setOrderLoading(false);
+    }
+  };
 
   const fetchCart = async () => {
     setPageLoading(true);
@@ -386,6 +432,7 @@ export default function ShoppingCartPage() {
 
             <button
               disabled={hasOutOfStock}
+              onClick={handleCheckout}
               style={{
                 ...styles.checkoutButton,
                 backgroundColor: hasOutOfStock ? "#9ca3af" : "#111827",
@@ -394,6 +441,69 @@ export default function ShoppingCartPage() {
             >
               Checkout
             </button>
+
+            {/* Auth Modal */}
+            {checkoutModal === 'auth' && (
+              <div onClick={() => setCheckoutModal('none')} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: '#fff', borderRadius: '20px', padding: '32px', width: '400px', maxWidth: '90vw', textAlign: 'center', boxShadow: '0 24px 60px rgba(0,0,0,0.15)' }}>
+                  <p style={{ fontSize: '32px', margin: '0 0 16px 0' }}>🔒</p>
+                  <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>Login Required</h3>
+                  <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 24px 0' }}>You have to login or register first to place an order.</p>
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                    <button onClick={() => { setCheckoutModal('none'); router.push('/login'); }} style={{ padding: '12px 28px', borderRadius: '12px', border: 'none', backgroundColor: '#111827', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>Login</button>
+                    <button onClick={() => { setCheckoutModal('none'); router.push('/register'); }} style={{ padding: '12px 28px', borderRadius: '12px', border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#374151', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}>Register</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Profile Incomplete Modal */}
+            {checkoutModal === 'profile' && (
+              <div onClick={() => setCheckoutModal('none')} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: '#fff', borderRadius: '20px', padding: '32px', width: '400px', maxWidth: '90vw', textAlign: 'center', boxShadow: '0 24px 60px rgba(0,0,0,0.15)' }}>
+                  <p style={{ fontSize: '32px', margin: '0 0 16px 0' }}>📋</p>
+                  <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>Profile Incomplete</h3>
+                  <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 24px 0' }}>Please complete your profile first. Your home address and tax ID are required to place an order.</p>
+                  <button onClick={() => { setCheckoutModal('none'); router.push('/profile'); }} style={{ padding: '12px 28px', borderRadius: '12px', border: 'none', backgroundColor: '#111827', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>Go to Profile</button>
+                </div>
+              </div>
+            )}
+
+            {/* Card Modal */}
+            {checkoutModal === 'card' && (
+              <div onClick={() => setCheckoutModal('none')} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: '#fff', borderRadius: '20px', padding: '32px', width: '440px', maxWidth: '90vw', boxShadow: '0 24px 60px rgba(0,0,0,0.15)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>Payment</h3>
+                    <button onClick={() => setCheckoutModal('none')} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280', padding: 0 }}>✕</button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div>
+                      <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Cardholder Name</label>
+                      <input type="text" placeholder="John Doe" value={cardHolder} onChange={(e) => setCardHolder(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Card Number</label>
+                      <input type="text" placeholder="1234 5678 9012 3456" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} maxLength={19} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Expiry Date</label>
+                        <input type="text" placeholder="MM/YY" value={cardDueDate} onChange={(e) => setCardDueDate(e.target.value)} maxLength={5} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>CVV</label>
+                        <input type="text" placeholder="123" value={cardCVV} onChange={(e) => setCardCVV(e.target.value)} maxLength={4} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+                      </div>
+                    </div>
+                    {orderError && <p style={{ fontSize: '13px', color: '#ef4444', margin: 0 }}>{orderError}</p>}
+                    <button onClick={handlePlaceOrder} disabled={orderLoading} style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', backgroundColor: orderLoading ? '#6b7280' : '#111827', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: orderLoading ? 'not-allowed' : 'pointer', marginTop: '8px' }}>
+                      {orderLoading ? 'Placing Order...' : 'Place Order'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         </>
       )}

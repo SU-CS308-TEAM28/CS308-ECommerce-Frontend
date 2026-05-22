@@ -10,6 +10,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (userData: User) => void;
+  update: (userData: User) => void;
   logout: () => void;
 }
 
@@ -30,11 +31,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error(e);
       }
     }
-    
+
     const checkAuthStatus = async () => {
       try {
         const response = await fetch("/api/auth/check-auth");
-        
+
         if (!response.ok) {
           // If unauthorized or token missing, clear the user auth
           if (localStorage.getItem("user") || user) {
@@ -55,6 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("user", JSON.stringify(userData));
   };
 
+  const update = (userData: User) => login(userData);
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
@@ -62,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, update, logout }}>
       {children}
     </AuthContext.Provider>
   );
