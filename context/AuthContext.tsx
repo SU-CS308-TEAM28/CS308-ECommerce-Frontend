@@ -36,11 +36,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const response = await fetch("/api/auth/check-auth");
 
-        if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
           // If unauthorized or token missing, clear the user auth
           if (localStorage.getItem("user") || user) {
             setUser(null);
             localStorage.removeItem("user");
+          }
+        }
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.data?.user) {
+            update(data.data.user);
           }
         }
       } catch (error) {
