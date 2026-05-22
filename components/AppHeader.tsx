@@ -11,64 +11,31 @@ export default function AppHeader() {
   const pathname = usePathname();
   const { user } = useAuth();
   
-  // Disable header and nav on login and register pages
-  const isAuthPage = pathname === '/login' || pathname === '/register';
+  const isHidden = pathname === '/login' || pathname === '/register' 
+    || pathname.startsWith('/product-manager') || pathname.startsWith('/sales-manager');
 
-  if (isAuthPage) {
-    return null;
-  }
+  if (isHidden) return null;
 
   return (
     <>
       <header style={{ borderBottom: '1px solid #e5e7eb', backgroundColor: '#ffffff' }}>
-        <div
-          style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            padding: '20px 24px',
-            display: 'grid',
-            gridTemplateColumns: '170px 1fr auto',
-            alignItems: 'center',
-            gap: '24px',
-          }}
-        >
+        <div style={{
+          maxWidth: '1200px', margin: '0 auto', padding: '20px 24px',
+          display: 'grid', gridTemplateColumns: '170px 1fr auto', alignItems: 'center', gap: '24px',
+        }}>
           <Link href="/" style={{ width: '170px', height: '60px', position: 'relative', display: 'block' }}>
-            <Image
-              src="/MainLogo.png"
-              alt="TeknoCS Logo"
-              fill
-              sizes="170px"
-              style={{ objectFit: 'contain' }}
-              priority
-            />
+            <Image src="/MainLogo.png" alt="TeknoCS Logo" fill sizes="170px" style={{ objectFit: 'contain' }} priority />
           </Link>
-
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', transform: 'translateX(-40px)' }}>
             <SearchBar />
           </div>
-
-          {/* ICONS (Cart + User) */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '16px' }}>
-            
-            {/* Wishlist */}
-            <Link href="/wishlist" style={{ fontSize: '24px', color: '#111827', textDecoration: 'none' }}>
-              🤍
-            </Link>
-
-            {/* Shopping Cart */}
-            <Link href="/shopping-cart" style={{ fontSize: '24px', color: '#111827', textDecoration: 'none' }}>
-              🛒
-            </Link>
-
-            {/* User */}
-            <Link href={user ? "/profile" : "/login"} style={{ fontSize: '24px', color: '#111827', textDecoration: 'none' }}>
-              👤
-            </Link>
-
+            <Link href="/wishlist" style={{ fontSize: '24px', color: '#111827', textDecoration: 'none' }}>🤍</Link>
+            <Link href="/shopping-cart" style={{ fontSize: '24px', color: '#111827', textDecoration: 'none' }}>🛒</Link>
+            <Link href={user ? "/profile" : "/login"} style={{ fontSize: '24px', color: '#111827', textDecoration: 'none' }}>👤</Link>
           </div>
         </div>
       </header>
-
       <nav style={{ borderBottom: '1px solid #e5e7eb', backgroundColor: '#ffffff' }}>
         <NavLinks />
       </nav>
