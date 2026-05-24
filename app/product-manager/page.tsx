@@ -62,18 +62,28 @@ type Order = {
   isCancelled: boolean;
 };
 
-const emptyForm = {
-  name: '', description: '', price: '', activeDiscount: '0', model: '',
-  serialNumber: '', warrantyStatus: '', distributorInformation: '',
-  thumbnailUrl: '', imageUrls: '', category: '', subcategories: '', stock: '',
-};
-
-type Panel = 'add' | 'stocks' | 'orders' | 'comments';
+type Panel = 'add' | 'products' | 'orders' | 'comments' | 'categories';
 
 const STATUS_OPTIONS = [
   { value: 'IN_TRANSIT', label: 'In Transit', color: '#3b82f6', bg: '#eff6ff' },
   { value: 'DELIVERED', label: 'Delivered', color: '#16a34a', bg: '#f0fdf4' },
 ];
+
+const ALL_STATUS = [
+  { value: 'PROCESSING', label: 'Processing', color: '#f59e0b', bg: '#fefce8' },
+  { value: 'IN_TRANSIT', label: 'In Transit', color: '#3b82f6', bg: '#eff6ff' },
+  { value: 'DELIVERED', label: 'Delivered', color: '#16a34a', bg: '#f0fdf4' },
+];
+
+function getStatusStyle(status: string) {
+  return ALL_STATUS.find(s => s.value === status) ?? { label: status, color: '#6b7280', bg: '#f9fafb' };
+}
+
+const emptyForm = {
+  name: '', description: '', price: '', activeDiscount: '0', model: '',
+  serialNumber: '', warrantyStatus: '', distributorInformation: '',
+  thumbnailUrl: '', category: '', stock: '',
+};
 
 export default function ProductManagerPage() {
   const { user } = useAuth();
@@ -84,17 +94,24 @@ export default function ProductManagerPage() {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
 
+  // Add form
   const [form, setForm] = useState(emptyForm);
+  const [imageUrls, setImageUrls] = useState<string[]>(['']);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [formSuccess, setFormSuccess] = useState('');
   const [formError, setFormError] = useState('');
 
+  // Edit product
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editForm, setEditForm] = useState<Partial<Product>>({});
+  const [editImageUrls, setEditImageUrls] = useState<string[]>(['']);
   const [editLoading, setEditLoading] = useState(false);
   const [editSuccess, setEditSuccess] = useState('');
   const [editError, setEditError] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<Product | null>(null);
 
+  // Orders
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [updateStatusOrder, setUpdateStatusOrder] = useState<Order | null>(null);
@@ -102,8 +119,17 @@ export default function ProductManagerPage() {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState('');
 
+  // Comments
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
+
+  // Categories management
+  const [catForm, setCatForm] = useState({ abbrv: '', label: '', isPrimitive: true });
+  const [editingCat, setEditingCat] = useState<Category | null>(null);
+  const [catLoading, setCatLoading] = useState(false);
+  const [catSuccess, setCatSuccess] = useState('');
+  const [catError, setCatError] = useState('');
+  const [deleteCatConfirm, setDeleteCatConfirm] = useState<Category | null>(null);
 
   useEffect(() => {
     if (user && user.userType !== 'product_manager') router.push('/');
@@ -111,10 +137,15 @@ export default function ProductManagerPage() {
   }, [user]);
 
   useEffect(() => {
-    if (activePanel === 'stocks') fetchProducts();
+    if (activePanel === 'products') fetchProducts();
     if (activePanel === 'orders') fetchOrders();
     if (activePanel === 'comments') fetchComments();
   }, [activePanel]);
+
+  // Reset subcategories when category changes in add form
+  useEffect(() => {
+    setSelectedSubcategories([]);
+  }, [form.category]);
 
   async function fetchCategories() {
     try {
@@ -161,9 +192,9 @@ export default function ProductManagerPage() {
         model: form.model, serialNumber: form.serialNumber,
         warrantyStatus: form.warrantyStatus, distributorInformation: form.distributorInformation,
         thumbnailUrl: form.thumbnailUrl || null,
-        imageUrls: form.imageUrls ? form.imageUrls.split(',').map(s => s.trim()).filter(Boolean) : [],
+        imageUrls: imageUrls.filter(u => u.trim()),
         category: form.category,
-        subcategories: form.subcategories ? form.subcategories.split(',').map(s => s.trim()).filter(Boolean) : [],
+        subcategories: selectedSubcategories,
         stock: parseInt(form.stock), extraProps: [],
       };
       const res = await fetch('/api/product/add', {
@@ -172,8 +203,10 @@ export default function ProductManagerPage() {
         body: JSON.stringify(body),
       });
       const json = await res.json();
-      if (res.ok) { setFormSuccess('Product added successfully!'); setForm(emptyForm); }
-      else setFormError(json?.message || 'Failed to add product.');
+      if (res.ok) {
+        setFormSuccess('Product added successfully!');
+        setForm(emptyForm); setImageUrls(['']); setSelectedSubcategories([]);
+      } else setFormError(json?.message || 'Failed to add product.');
     } catch { setFormError('Could not connect to server.'); }
     finally { setFormLoading(false); }
   }
@@ -188,7 +221,7 @@ export default function ProductManagerPage() {
         model: editForm.model, serialNumber: editForm.serialNumber,
         warrantyStatus: editForm.warrantyStatus, distributorInformation: editForm.distributorInformation,
         thumbnailUrl: editForm.thumbnailUrl || null,
-        imageUrls: editForm.imageUrls ?? [],
+        imageUrls: editImageUrls.filter(u => u.trim()),
         category: editingProduct.category,
         subcategories: editingProduct.subcategories ?? [],
         stock: editForm.stock, extraProps: editForm.extraProps ?? [],
@@ -206,6 +239,19 @@ export default function ProductManagerPage() {
       } else setEditError(json?.message || 'Failed to update.');
     } catch { setEditError('Could not connect to server.'); }
     finally { setEditLoading(false); }
+  }
+
+  async function handleDeleteProduct(product: Product) {
+    try {
+      const res = await fetch(`/api/product/${product.id}`, { method: 'DELETE', credentials: 'include' });
+      if (res.ok) {
+        setProducts(prev => prev.filter(p => p.id !== product.id));
+        setDeleteConfirm(null);
+      } else {
+        const json = await res.json();
+        alert(json?.message || 'Failed to delete.');
+      }
+    } catch { alert('Could not connect to server.'); }
   }
 
   async function handleUpdateStatus() {
@@ -236,6 +282,38 @@ export default function ProductManagerPage() {
     } catch {}
   }
 
+  async function handleAddCategory() {
+    setCatLoading(true); setCatError(''); setCatSuccess('');
+    try {
+      const res = await fetch('/api/product/category/add', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...catForm, subCategories: [] }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setCatSuccess('Category added!');
+        setCatForm({ abbrv: '', label: '', isPrimitive: true });
+        fetchCategories();
+        setTimeout(() => setCatSuccess(''), 2000);
+      } else setCatError(json?.message || 'Failed to add category.');
+    } catch { setCatError('Could not connect to server.'); }
+    finally { setCatLoading(false); }
+  }
+
+  async function handleDeleteCategory(cat: Category) {
+    try {
+      const res = await fetch(`/api/product/category/${cat.id}`, { method: 'DELETE', credentials: 'include' });
+      if (res.ok) {
+        setDeleteCatConfirm(null);
+        fetchCategories();
+      } else {
+        const json = await res.json();
+        alert(json?.message || 'Failed to delete category.');
+      }
+    } catch { alert('Could not connect to server.'); }
+  }
+
   if (!user || user.userType !== 'product_manager') {
     return (
       <div style={{ maxWidth: '600px', margin: '80px auto', textAlign: 'center' }}>
@@ -248,12 +326,19 @@ export default function ProductManagerPage() {
 
   const panels: { key: Panel; label: string; icon: string }[] = [
     { key: 'add', label: 'Add Product', icon: '➕' },
-    { key: 'stocks', label: 'Manage Stocks', icon: '📦' },
+    { key: 'products', label: 'Manage Products', icon: '📦' },
     { key: 'orders', label: 'Orders', icon: '🚚' },
     { key: 'comments', label: 'Comments', icon: '💬' },
+    { key: 'categories', label: 'Categories', icon: '🏷️' },
   ];
 
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none', boxSizing: 'border-box' };
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '10px 14px', borderRadius: '10px',
+    border: '1px solid #d1d5db', fontSize: '14px', outline: 'none', boxSizing: 'border-box',
+  };
+
+  const selectedCategory = categories.find(c => c.abbrv === form.category);
+  const availableSubcategories = selectedCategory?.subCategories ?? [];
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
@@ -275,11 +360,6 @@ export default function ProductManagerPage() {
             <span>{p.icon}</span>{p.label}
           </button>
         ))}
-        <div style={{ marginTop: 'auto', paddingTop: '24px' }}>
-          <button onClick={() => router.push('/')} style={{ padding: '10px 14px', borderRadius: '10px', border: 'none', textAlign: 'left', backgroundColor: 'transparent', color: '#6b7280', fontSize: '14px', cursor: 'pointer', width: '100%' }}>
-            ← Back to Store
-          </button>
-        </div>
       </aside>
 
       {/* Main */}
@@ -290,6 +370,8 @@ export default function ProductManagerPage() {
           <div style={{ maxWidth: '700px' }}>
             <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#111827', margin: '0 0 24px 0' }}>Add Product</h1>
             <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '28px', border: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
+              {/* Basic fields */}
               {([
                 { key: 'name', label: 'Product Name *', placeholder: 'e.g. iPhone 15 Pro' },
                 { key: 'price', label: 'Price (₺) *', placeholder: '0.00', type: 'number' },
@@ -300,26 +382,94 @@ export default function ProductManagerPage() {
                 { key: 'warrantyStatus', label: 'Warranty', placeholder: 'e.g. 2 Years' },
                 { key: 'distributorInformation', label: 'Distributor', placeholder: 'Distributor name' },
                 { key: 'thumbnailUrl', label: 'Thumbnail URL', placeholder: 'https://...' },
-                { key: 'imageUrls', label: 'Image URLs (comma separated)', placeholder: 'https://..., https://...' },
-                { key: 'subcategories', label: 'Subcategories (comma separated)', placeholder: 'e.g. Laptops, macOS' },
               ] as { key: string; label: string; placeholder: string; type?: string }[]).map(({ key, label, placeholder, type }) => (
                 <div key={key}>
                   <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '5px' }}>{label}</label>
                   <input type={type || 'text'} value={form[key as keyof typeof form]} onChange={e => setForm(prev => ({ ...prev, [key]: e.target.value }))} placeholder={placeholder} style={inputStyle} />
                 </div>
               ))}
+
+              {/* Description */}
               <div>
                 <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '5px' }}>Description *</label>
                 <textarea value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} placeholder="Product description..." rows={3}
                   style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }} />
               </div>
+
+              {/* Image URLs - dynamic fields */}
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '8px' }}>Image URLs</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {imageUrls.map((url, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        value={url}
+                        onChange={e => {
+                          const updated = [...imageUrls];
+                          updated[idx] = e.target.value;
+                          setImageUrls(updated);
+                        }}
+                        placeholder="https://..."
+                        style={{ ...inputStyle, flex: 1 }}
+                      />
+                      <button
+                        onClick={() => {
+                          const updated = [...imageUrls];
+                          updated.splice(idx + 1, 0, '');
+                          setImageUrls(updated);
+                        }}
+                        title="Add URL below"
+                        style={{ width: '32px', height: '38px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#374151', fontSize: '16px', cursor: 'pointer', flexShrink: 0 }}
+                      >
+                        +
+                      </button>
+                      {imageUrls.length > 1 && (
+                        <button
+                          onClick={() => setImageUrls(prev => prev.filter((_, i) => i !== idx))}
+                          title="Remove this URL"
+                          style={{ width: '32px', height: '38px', borderRadius: '8px', border: 'none', backgroundColor: '#fef2f2', color: '#ef4444', fontSize: '14px', cursor: 'pointer', flexShrink: 0 }}
+                        >
+                          🗑️
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Category */}
               <div>
                 <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '5px' }}>Category *</label>
-                <select value={form.category} onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))} style={{ ...inputStyle, backgroundColor: '#fff' }}>
+                <select value={form.category} onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))}
+                  style={{ ...inputStyle, backgroundColor: '#fff' }}>
                   <option value="">Select category...</option>
                   {categories.filter(c => c.isPrimitive).map(c => <option key={c.id} value={c.abbrv}>{c.label}</option>)}
                 </select>
               </div>
+
+              {/* Subcategories - checkboxes */}
+              {form.category && availableSubcategories.length > 0 && (
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '8px' }}>Subcategories</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                    {availableSubcategories.map(sub => (
+                      <label key={sub.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '14px', color: '#374151' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedSubcategories.includes(sub.abbrv)}
+                          onChange={e => setSelectedSubcategories(prev =>
+                            e.target.checked ? [...prev, sub.abbrv] : prev.filter(s => s !== sub.abbrv)
+                          )}
+                          style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                        />
+                        {sub.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {formError && <p style={{ fontSize: '13px', color: '#ef4444', margin: 0 }}>{formError}</p>}
               {formSuccess && <p style={{ fontSize: '13px', color: '#16a34a', margin: 0 }}>{formSuccess}</p>}
               <button onClick={handleAddProduct} disabled={formLoading}
@@ -330,16 +480,16 @@ export default function ProductManagerPage() {
           </div>
         )}
 
-        {/* MANAGE STOCKS */}
-        {activePanel === 'stocks' && (
+        {/* MANAGE PRODUCTS */}
+        {activePanel === 'products' && (
           <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#111827', margin: '0 0 24px 0' }}>Manage Stocks</h1>
+            <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#111827', margin: '0 0 24px 0' }}>Manage Products</h1>
             {loadingProducts ? <p style={{ color: '#6b7280' }}>Loading...</p> : (
               <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                      {['Image', 'Name', 'Category', 'Price', 'Discount', 'Stock', 'Edit'].map(h => (
+                      {['Image', 'Name', 'Category', 'Price', 'Discount', 'Stock', 'Actions'].map(h => (
                         <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>{h}</th>
                       ))}
                     </tr>
@@ -358,10 +508,16 @@ export default function ProductManagerPage() {
                         <td style={{ padding: '12px 16px', fontSize: '14px', color: '#111827' }}>{product.activeDiscount}%</td>
                         <td style={{ padding: '12px 16px', fontSize: '14px', color: product.stock === 0 ? '#ef4444' : '#111827', fontWeight: 600 }}>{product.stock}</td>
                         <td style={{ padding: '12px 16px' }}>
-                          <button onClick={() => { setEditingProduct(product); setEditForm({ ...product }); setEditSuccess(''); setEditError(''); }}
-                            style={{ padding: '7px 14px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#374151', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-                            ✏️ Edit
-                          </button>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button onClick={() => { setEditingProduct(product); setEditForm({ ...product }); setEditImageUrls(product.imageUrls?.length ? [...product.imageUrls] : ['']); setEditSuccess(''); setEditError(''); }}
+                              style={{ padding: '7px 12px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#374151', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                              ✏️ Edit
+                            </button>
+                            <button onClick={() => setDeleteConfirm(product)}
+                              style={{ padding: '7px 12px', borderRadius: '8px', border: 'none', backgroundColor: '#fef2f2', color: '#ef4444', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                              🗑️
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -386,28 +542,36 @@ export default function ProductManagerPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                      {['Order ID', 'Date', 'Address', 'Total', 'Actions'].map(h => (
+                      {['Order ID', 'Date', 'Address', 'Total', 'Current Status', 'Actions'].map(h => (
                         <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {orders.map((order, i) => (
-                      <tr key={order.id} style={{ borderBottom: i < orders.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
-                        <td style={{ padding: '14px 16px', fontSize: '13px', fontFamily: 'monospace', color: '#374151' }}>#{order.id.slice(-8).toUpperCase()}</td>
-                        <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6b7280' }}>{order.orderDate ? new Date(order.orderDate).toLocaleDateString('tr-TR') : '—'}</td>
-                        <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6b7280', maxWidth: '160px' }}>
-                          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.deliveryAddress || '—'}</div>
-                        </td>
-                        <td style={{ padding: '14px 16px', fontSize: '14px', fontWeight: 600, color: '#111827' }}>₺{order.totalPrice?.toFixed(2)}</td>
-                        <td style={{ padding: '14px 16px' }}>
-                          <button onClick={() => { setUpdateStatusOrder(order); setNewStatus(''); }}
-                            style={{ padding: '7px 14px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#374151', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-                            Update Status
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {orders.map((order, i) => {
+                      const statusStyle = getStatusStyle(order.status);
+                      return (
+                        <tr key={order.id} style={{ borderBottom: i < orders.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
+                          <td style={{ padding: '14px 16px', fontSize: '13px', fontFamily: 'monospace', color: '#374151' }}>#{order.id.slice(-8).toUpperCase()}</td>
+                          <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6b7280' }}>{order.orderDate ? new Date(order.orderDate).toLocaleDateString('tr-TR') : '—'}</td>
+                          <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6b7280', maxWidth: '140px' }}>
+                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.deliveryAddress || '—'}</div>
+                          </td>
+                          <td style={{ padding: '14px 16px', fontSize: '14px', fontWeight: 600, color: '#111827' }}>₺{order.totalPrice?.toFixed(2)}</td>
+                          <td style={{ padding: '14px 16px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', backgroundColor: statusStyle.bg, color: statusStyle.color, fontSize: '12px', fontWeight: 600 }}>
+                              ● {statusStyle.label}
+                            </span>
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            <button onClick={() => { setUpdateStatusOrder(order); setNewStatus(''); }}
+                              style={{ padding: '7px 14px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#374151', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                              Update Status
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -458,6 +622,73 @@ export default function ProductManagerPage() {
             )}
           </div>
         )}
+
+        {/* CATEGORIES */}
+        {activePanel === 'categories' && (
+          <div style={{ maxWidth: '700px' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#111827', margin: '0 0 24px 0' }}>Manage Categories</h1>
+
+            {/* Add Category Form */}
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px', border: '1px solid #e5e7eb', marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>Add New Category</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '5px' }}>Label *</label>
+                  <input type="text" value={catForm.label} onChange={e => setCatForm(prev => ({ ...prev, label: e.target.value }))} placeholder="e.g. Computers" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '5px' }}>Abbreviation *</label>
+                  <input type="text" value={catForm.abbrv} onChange={e => setCatForm(prev => ({ ...prev, abbrv: e.target.value }))} placeholder="e.g. computers" style={inputStyle} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => setCatForm(prev => ({ ...prev, isPrimitive: !prev.isPrimitive }))}>
+                  <div style={{ width: '20px', height: '20px', borderRadius: '6px', border: '2px solid #d1d5db', backgroundColor: catForm.isPrimitive ? '#111827' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {catForm.isPrimitive && <span style={{ color: '#fff', fontSize: '12px' }}>✓</span>}
+                  </div>
+                  <span style={{ fontSize: '14px', color: '#374151' }}>Is Primary Category</span>
+                </div>
+                {catError && <p style={{ fontSize: '13px', color: '#ef4444', margin: 0 }}>{catError}</p>}
+                {catSuccess && <p style={{ fontSize: '13px', color: '#16a34a', margin: 0 }}>{catSuccess}</p>}
+                <button onClick={handleAddCategory} disabled={catLoading}
+                  style={{ padding: '12px', borderRadius: '12px', border: 'none', backgroundColor: catLoading ? '#6b7280' : '#111827', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: catLoading ? 'not-allowed' : 'pointer' }}>
+                  {catLoading ? 'Adding...' : 'Add Category'}
+                </button>
+              </div>
+            </div>
+
+            {/* Existing Categories */}
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                    {['Label', 'Abbreviation', 'Type', 'Subcategories', ''].map(h => (
+                      <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {categories.map((cat, i) => (
+                    <tr key={cat.id} style={{ borderBottom: i < categories.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
+                      <td style={{ padding: '14px 16px', fontSize: '14px', fontWeight: 500, color: '#111827' }}>{cat.label}</td>
+                      <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6b7280', fontFamily: 'monospace' }}>{cat.abbrv}</td>
+                      <td style={{ padding: '14px 16px', fontSize: '13px' }}>
+                        <span style={{ padding: '2px 8px', borderRadius: '6px', backgroundColor: cat.isPrimitive ? '#eff6ff' : '#f3f4f6', color: cat.isPrimitive ? '#3b82f6' : '#6b7280', fontSize: '12px', fontWeight: 600 }}>
+                          {cat.isPrimitive ? 'Primary' : 'Sub'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6b7280' }}>{cat.subCategories?.length ?? 0}</td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <button onClick={() => setDeleteCatConfirm(cat)}
+                          style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', backgroundColor: '#fef2f2', color: '#ef4444', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                          🗑️
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Edit Product Modal */}
@@ -488,11 +719,72 @@ export default function ProductManagerPage() {
                 <textarea value={editForm.description ?? ''} onChange={e => setEditForm(prev => ({ ...prev, description: e.target.value }))} rows={3}
                   style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }} />
               </div>
+
+              {/* Edit Image URLs */}
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Image URLs</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {editImageUrls.map((url, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input type="text" value={url} onChange={e => { const u = [...editImageUrls]; u[idx] = e.target.value; setEditImageUrls(u); }} placeholder="https://..." style={{ ...inputStyle, flex: 1 }} />
+                      <button onClick={() => { const u = [...editImageUrls]; u.splice(idx + 1, 0, ''); setEditImageUrls(u); }}
+                        style={{ width: '32px', height: '38px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#374151', fontSize: '16px', cursor: 'pointer', flexShrink: 0 }}>+</button>
+                      {editImageUrls.length > 1 && (
+                        <button onClick={() => setEditImageUrls(prev => prev.filter((_, i) => i !== idx))}
+                          style={{ width: '32px', height: '38px', borderRadius: '8px', border: 'none', backgroundColor: '#fef2f2', color: '#ef4444', fontSize: '14px', cursor: 'pointer', flexShrink: 0 }}>🗑️</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {editError && <p style={{ fontSize: '13px', color: '#ef4444', margin: 0 }}>{editError}</p>}
               {editSuccess && <p style={{ fontSize: '13px', color: '#16a34a', margin: 0 }}>{editSuccess}</p>}
               <button onClick={handleUpdateProduct} disabled={editLoading}
                 style={{ padding: '14px', borderRadius: '12px', border: 'none', backgroundColor: editLoading ? '#6b7280' : '#111827', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: editLoading ? 'not-allowed' : 'pointer', marginTop: '4px' }}>
                 {editLoading ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Product Confirm */}
+      {deleteConfirm && (
+        <div onClick={() => setDeleteConfirm(null)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#fff', borderRadius: '20px', padding: '32px', width: '380px', maxWidth: '90vw', textAlign: 'center', boxShadow: '0 24px 60px rgba(0,0,0,0.15)' }}>
+            <p style={{ fontSize: '40px', margin: '0 0 16px 0' }}>🗑️</p>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>Delete Product?</h3>
+            <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 24px 0' }}>"{deleteConfirm.name}" will be permanently deleted.</p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button onClick={() => handleDeleteProduct(deleteConfirm)}
+                style={{ padding: '12px 28px', borderRadius: '12px', border: 'none', backgroundColor: '#ef4444', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>
+                Delete
+              </button>
+              <button onClick={() => setDeleteConfirm(null)}
+                style={{ padding: '12px 28px', borderRadius: '12px', border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#374151', fontSize: '15px', cursor: 'pointer' }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Category Confirm */}
+      {deleteCatConfirm && (
+        <div onClick={() => setDeleteCatConfirm(null)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#fff', borderRadius: '20px', padding: '32px', width: '380px', maxWidth: '90vw', textAlign: 'center', boxShadow: '0 24px 60px rgba(0,0,0,0.15)' }}>
+            <p style={{ fontSize: '40px', margin: '0 0 16px 0' }}>🏷️</p>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>Delete Category?</h3>
+            <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 24px 0' }}>"{deleteCatConfirm.label}" will be permanently deleted.</p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button onClick={() => handleDeleteCategory(deleteCatConfirm)}
+                style={{ padding: '12px 28px', borderRadius: '12px', border: 'none', backgroundColor: '#ef4444', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>
+                Delete
+              </button>
+              <button onClick={() => setDeleteCatConfirm(null)}
+                style={{ padding: '12px 28px', borderRadius: '12px', border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#374151', fontSize: '15px', cursor: 'pointer' }}>
+                Cancel
               </button>
             </div>
           </div>
