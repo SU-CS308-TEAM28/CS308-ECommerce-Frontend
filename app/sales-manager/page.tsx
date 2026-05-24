@@ -36,7 +36,7 @@ type Product = {
   stock: number;
 };
 
-type Panel = 'pricing' | 'orders' | 'delivery';
+type Panel = 'pricing' | 'orders';
 
 const ALL_STATUS_OPTIONS = [
   { value: 'PROCESSING', label: 'Processing', color: '#f59e0b', bg: '#fefce8' },
@@ -77,13 +77,7 @@ export default function SalesManagerPage() {
   const [invoiceUrl, setInvoiceUrl] = useState('');
   const [invoiceLoading, setInvoiceLoading] = useState(false);
 
-  // Delivery
-  const [deliveryOrders, setDeliveryOrders] = useState<Order[]>([]);
-  const [loadingDelivery, setLoadingDelivery] = useState(false);
-  const [updateStatusOrder, setUpdateStatusOrder] = useState<Order | null>(null);
-  const [newStatus, setNewStatus] = useState('');
-  const [updateLoading, setUpdateLoading] = useState(false);
-  const [updateSuccess, setUpdateSuccess] = useState('');
+
 
   useEffect(() => {
     if (user && user.userType !== 'sales_manager') router.push('/');
@@ -92,7 +86,6 @@ export default function SalesManagerPage() {
   useEffect(() => {
     if (activePanel === 'pricing') fetchProducts();
     if (activePanel === 'orders') fetchOrders();
-    if (activePanel === 'delivery') fetchDeliveryOrders();
   }, [activePanel]);
 
   async function fetchProducts() {
@@ -117,16 +110,6 @@ export default function SalesManagerPage() {
       const json = await res.json();
       setOrders(json?.data ?? []);
     } catch {} finally { setLoadingOrders(false); }
-  }
-
-  async function fetchDeliveryOrders() {
-    setLoadingDelivery(true);
-    try {
-      const res = await fetch('/api/order/orders', { credentials: 'include' });
-      const json = await res.json();
-      const all: Order[] = json?.data ?? [];
-      setDeliveryOrders(all.filter(o => o.status === 'PROCESSING' && !o.isCancelled));
-    } catch {} finally { setLoadingDelivery(false); }
   }
 
   async function handleUpdatePrice() {
@@ -205,23 +188,6 @@ export default function SalesManagerPage() {
     finally { setInvoiceLoading(false); }
   }
 
-  async function handleUpdateStatus() {
-    if (!updateStatusOrder || !newStatus) return;
-    setUpdateLoading(true); setUpdateSuccess('');
-    try {
-      const res = await fetch(`/api/order/${updateStatusOrder.id}`, {
-        method: 'PUT', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (res.ok) {
-        setUpdateSuccess('Status updated!');
-        setDeliveryOrders(prev => prev.filter(o => o.id !== updateStatusOrder.id));
-        setTimeout(() => { setUpdateStatusOrder(null); setUpdateSuccess(''); setNewStatus(''); }, 1200);
-      }
-    } catch {} finally { setUpdateLoading(false); }
-  }
-
   if (!user || user.userType !== 'sales_manager') {
     return (
       <div style={{ maxWidth: '600px', margin: '80px auto', textAlign: 'center' }}>
@@ -235,7 +201,6 @@ export default function SalesManagerPage() {
   const panels: { key: Panel; label: string; icon: string }[] = [
     { key: 'pricing', label: 'Pricing', icon: '💰' },
     { key: 'orders', label: 'Orders', icon: '📋' },
-    { key: 'delivery', label: 'Delivery', icon: '🚚' },
   ];
 
   const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none', boxSizing: 'border-box' };
@@ -431,49 +396,6 @@ export default function SalesManagerPage() {
           </div>
         )}
 
-        {/* DELIVERY */}
-        {activePanel === 'delivery' && (
-          <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#111827', margin: '0 0 24px 0' }}>Delivery</h1>
-            {loadingDelivery ? <p style={{ color: '#6b7280' }}>Loading...</p> : deliveryOrders.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px 0', color: '#9ca3af' }}>
-                <p style={{ fontSize: '40px', margin: '0 0 12px 0' }}>🚚</p>
-                <p>No processing orders.</p>
-              </div>
-            ) : (
-              <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                      {['Order ID', 'Date', 'Address', 'Total', 'Actions'].map(h => (
-                        <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {deliveryOrders.map((order, i) => (
-                      <tr key={order.id} style={{ borderBottom: i < deliveryOrders.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
-                        <td style={{ padding: '14px 16px', fontSize: '13px', fontFamily: 'monospace', color: '#374151' }}>#{order.id.slice(-8).toUpperCase()}</td>
-                        <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6b7280' }}>{order.orderDate ? new Date(order.orderDate).toLocaleDateString('tr-TR') : '—'}</td>
-                        <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6b7280', maxWidth: '160px' }}>
-                          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.deliveryAddress || '—'}</div>
-                        </td>
-                        <td style={{ padding: '14px 16px', fontSize: '14px', fontWeight: 600, color: '#111827' }}>₺{order.totalPrice?.toFixed(2)}</td>
-                        <td style={{ padding: '14px 16px' }}>
-                          <button onClick={() => { setUpdateStatusOrder(order); setNewStatus(''); }}
-                            style={{ padding: '7px 14px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#374151', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-                            Update Status
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-      </main>
 
       {/* Edit Price Modal */}
       {singlePriceProduct && (
@@ -536,39 +458,6 @@ export default function SalesManagerPage() {
         </div>
       )}
 
-      {/* Update Status Modal */}
-      {updateStatusOrder && (
-        <div onClick={() => { setUpdateStatusOrder(null); setUpdateSuccess(''); setNewStatus(''); }} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#fff', borderRadius: '20px', padding: '32px', width: '380px', maxWidth: '90vw', boxShadow: '0 24px 60px rgba(0,0,0,0.15)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>Update Status</h3>
-              <button onClick={() => { setUpdateStatusOrder(null); setUpdateSuccess(''); setNewStatus(''); }} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280' }}>✕</button>
-            </div>
-            {updateSuccess ? (
-              <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                <p style={{ fontSize: '32px', margin: '0 0 12px 0' }}>✅</p>
-                <p style={{ fontSize: '15px', fontWeight: 600, color: '#16a34a' }}>{updateSuccess}</p>
-              </div>
-            ) : (
-              <>
-                <p style={{ fontSize: '13px', color: '#6b7280', margin: '0 0 16px 0' }}>Order #{updateStatusOrder.id.slice(-8).toUpperCase()}</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-                  {DELIVERY_STATUS_OPTIONS.map(opt => (
-                    <button key={opt.value} onClick={() => setNewStatus(opt.value)}
-                      style={{ padding: '12px 16px', borderRadius: '10px', border: newStatus === opt.value ? `2px solid ${opt.color}` : '1px solid #e5e7eb', backgroundColor: newStatus === opt.value ? opt.bg : '#fff', color: newStatus === opt.value ? opt.color : '#374151', fontSize: '14px', fontWeight: newStatus === opt.value ? 700 : 400, cursor: 'pointer', textAlign: 'left' }}>
-                      ● {opt.label}
-                    </button>
-                  ))}
-                </div>
-                <button onClick={handleUpdateStatus} disabled={!newStatus || updateLoading}
-                  style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', backgroundColor: !newStatus || updateLoading ? '#d1d5db' : '#111827', color: !newStatus || updateLoading ? '#9ca3af' : '#fff', fontSize: '15px', fontWeight: 700, cursor: !newStatus || updateLoading ? 'not-allowed' : 'pointer' }}>
-                  {updateLoading ? 'Updating...' : 'Update Status'}
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

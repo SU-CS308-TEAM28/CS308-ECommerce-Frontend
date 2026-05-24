@@ -118,6 +118,7 @@ export default function ProductManagerPage() {
   const [newStatus, setNewStatus] = useState('');
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState('');
+  const [orderProductsModal, setOrderProductsModal] = useState<Order | null>(null);
 
   // Comments
   const [comments, setComments] = useState<Comment[]>([]);
@@ -542,7 +543,7 @@ export default function ProductManagerPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                      {['Order ID', 'Date', 'Address', 'Total', 'Current Status', 'Actions'].map(h => (
+                      {['Order ID', 'Date', 'Address', 'Total', 'Current Status', 'Products', 'Actions'].map(h => (
                         <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>{h}</th>
                       ))}
                     </tr>
@@ -562,6 +563,12 @@ export default function ProductManagerPage() {
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', backgroundColor: statusStyle.bg, color: statusStyle.color, fontSize: '12px', fontWeight: 600 }}>
                               ● {statusStyle.label}
                             </span>
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            <button onClick={() => setOrderProductsModal(order)}
+                              style={{ padding: '7px 12px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#374151', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                              📦 Show
+                            </button>
                           </td>
                           <td style={{ padding: '14px 16px' }}>
                             <button onClick={() => { setUpdateStatusOrder(order); setNewStatus(''); }}
@@ -786,6 +793,52 @@ export default function ProductManagerPage() {
                 style={{ padding: '12px 28px', borderRadius: '12px', border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#374151', fontSize: '15px', cursor: 'pointer' }}>
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Order Products Modal */}
+      {orderProductsModal && (
+        <div onClick={() => setOrderProductsModal(null)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#fff', borderRadius: '20px', padding: '32px', width: '560px', maxWidth: '90vw', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 24px 60px rgba(0,0,0,0.15)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>
+                Order #{orderProductsModal.id.slice(-8).toUpperCase()} — Products
+              </h3>
+              <button onClick={() => setOrderProductsModal(null)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280' }}>✕</button>
+            </div>
+            <div style={{ borderTop: '1px solid #e5e7eb' }}>
+              {(orderProductsModal.products ?? []).map((item, i) => {
+                const discountedPrice = item.activeDiscount > 0
+                  ? item.price * (1 - item.activeDiscount / 100)
+                  : item.price;
+                return (
+                  <div key={item.productId ?? i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid #f3f4f6', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                      <img src={item.thumbnailUrl || '/MainLogo.png'} alt={item.name}
+                        style={{ width: '44px', height: '44px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '2px', backgroundColor: '#fff', flexShrink: 0 }} />
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontSize: '14px', fontWeight: 500, color: '#111827', margin: '0 0 3px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
+                        <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>Qty: {item.quantity}</p>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      {item.activeDiscount > 0 && (
+                        <p style={{ fontSize: '12px', color: '#9ca3af', textDecoration: 'line-through', margin: '0 0 2px 0' }}>
+                          ₺{(item.price * item.quantity).toFixed(2)}
+                        </p>
+                      )}
+                      <p style={{ fontSize: '15px', fontWeight: 600, color: '#111827', margin: 0 }}>
+                        ₺{(discountedPrice * item.quantity).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ marginTop: '16px', textAlign: 'right', fontSize: '16px', fontWeight: 700, color: '#111827' }}>
+              Total: ₺{orderProductsModal.totalPrice?.toFixed(2)}
             </div>
           </div>
         </div>
