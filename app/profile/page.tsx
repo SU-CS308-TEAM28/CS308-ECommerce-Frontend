@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
-type OrderStatus = 'PROCESSING' | 'IN_TRANSIT' | 'DELIVERED';
+type OrderStatus = 'PROCESSING' | 'IN_TRANSIT' | 'DELIVERED' | 'CANCELLED';
 
 type Order = {
   id: string;
@@ -14,6 +14,7 @@ type Order = {
   status: OrderStatus;
   totalPrice: number;
   deliveryAddress: string;
+  cancelled: boolean;
 };
 
 type Tab = 'account' | 'orders';
@@ -44,6 +45,8 @@ function statusStyle(status: OrderStatus): { bg: string; fg: string; label: stri
       return { bg: '#f0fdf4', fg: '#15803d', label: 'Delivered' };
     default:
       return { bg: '#f3f4f6', fg: '#374151', label: String(status) };
+    case 'CANCELLED':
+      return { bg: '#fef2f2', fg: '#b91c1c', label: 'Cancelled' };
   }
 }
 
@@ -210,6 +213,7 @@ function EditableField({
 // -----------------------------------------------------------------------------
 
 function OrdersTab() {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -296,12 +300,16 @@ function OrdersTab() {
       </div>
 
       {orders.map((order) => {
-        const s = statusStyle(order.status);
+        const displayStatus = order.cancelled ? 'CANCELLED' : order.status;
+        const s = statusStyle(displayStatus as OrderStatus);
+        
         return (
           <div
             key={order.id}
+            onClick={() => router.push(`/orders/${order.id}`)}
             style={{
               display: 'grid',
+              cursor: 'pointer',
               gridTemplateColumns: '160px 1fr 160px 140px',
               gap: '16px',
               alignItems: 'center',
