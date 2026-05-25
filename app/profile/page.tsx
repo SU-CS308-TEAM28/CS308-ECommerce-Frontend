@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
-type OrderStatus = 'PROCESSING' | 'IN_TRANSIT' | 'DELIVERED';
+type OrderStatus = 'PROCESSING' | 'IN_TRANSIT' | 'DELIVERED' | 'CANCELLED';
 
 type Order = {
   id: string;
@@ -297,7 +297,9 @@ function OrdersTab() {
       </div>
 
       {orders.map((order) => {
-        const s = statusStyle(order.status);
+        const effectiveStatus =(order as any).isCancelled ? 'CANCELLED' : order.status;
+
+        const s = statusStyle(effectiveStatus as OrderStatus);
         return (
           <div
             key={order.id}
