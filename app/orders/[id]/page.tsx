@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 type OrderStatus = 'PROCESSING' | 'IN_TRANSIT' | 'DELIVERED' | 'CANCELLED';
 
 type Product = {
+thumbnailUrl?: string;
   productId?: string;
   id?: string;
   name?: string;
@@ -52,9 +53,13 @@ function getProductName(product: Product) {
 }
 
 function getProductImage(product: Product) {
+  if (product.thumbnailUrl) return product.thumbnailUrl;
   if (product.imageUrl) return product.imageUrl;
   if (product.image) return product.image;
-  if (Array.isArray(product.images) && product.images.length > 0) return product.images[0];
+  if (Array.isArray(product.images) && product.images.length > 0) {
+    return product.images[0];
+  }
+
   return 'https://placehold.co/100x100?text=Product';
 }
 
