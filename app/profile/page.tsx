@@ -16,7 +16,7 @@ type Order = {
   deliveryAddress: string;
 };
 
-type Tab = 'account' | 'orders';
+type Tab = 'account' | 'orders' | 'returns';
 
 // -----------------------------------------------------------------------------
 // Helpers
@@ -210,6 +210,7 @@ function EditableField({
 // -----------------------------------------------------------------------------
 
 function OrdersTab() {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -300,6 +301,7 @@ function OrdersTab() {
         return (
           <div
             key={order.id}
+            onClick={() => router.push(`/orders/${order.id}`)}
             style={{
               display: 'grid',
               gridTemplateColumns: '160px 1fr 160px 140px',
@@ -308,6 +310,9 @@ function OrdersTab() {
               padding: '20px',
               borderBottom: '1px solid #f3f4f6',
               transition: 'background-color 0.15s ease',
+              cursor: 'pointer',
+              borderRadius: '16px',
+              marginTop: '8px',
             }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.backgroundColor = '#fafafa'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.backgroundColor = 'transparent'; }}
@@ -376,7 +381,7 @@ export default function ProfilePage() {
           marginBottom: '32px',
         }}
       >
-        {(['account', 'orders'] as const).map((t) => {
+        {(['account', 'orders', 'returns'] as const).map((t) => {
           const active = tab === t;
           return (
             <button
@@ -395,13 +400,47 @@ export default function ProfilePage() {
                 transition: 'background-color 0.15s ease, color 0.15s ease',
               }}
             >
-              {t === 'account' ? 'Account' : 'Orders'}
+              {t === 'account' ? 'Account' : t === 'orders' ? 'Orders' : 'Returns'}
             </button>
           );
         })}
       </div>
 
-      {tab === 'account' ? <AccountTab /> : <OrdersTab />}
+      {tab === 'account' ? (
+  <AccountTab />
+) : tab === 'orders' ? (
+  <OrdersTab />
+) : (
+  <div
+    style={{
+      padding: '40px',
+      borderRadius: '20px',
+      border: '1px solid #e5e7eb',
+      backgroundColor: '#f9fafb',
+      textAlign: 'center',
+    }}
+  >
+    <p
+      style={{
+        fontSize: '16px',
+        fontWeight: 600,
+        color: '#111827',
+        marginBottom: '8px',
+      }}
+    >
+      No return requests yet
+    </p>
+
+    <p
+      style={{
+        fontSize: '14px',
+        color: '#6b7280',
+      }}
+    >
+      Your return requests will appear here.
+    </p>
+  </div>
+)}
     </div>
   );
 }
