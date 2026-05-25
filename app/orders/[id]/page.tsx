@@ -162,7 +162,9 @@ export default function OrderDetailPage() {
             style={{
               padding: '10px 18px',
               borderRadius: '999px',
-              backgroundColor: '#f3f4f6',
+              backgroundColor: '#ffffff',
+              border: '1px solid #e5e7eb',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
               color: statusColor(order.status),
               fontWeight: 700,
               fontSize: '14px',
@@ -280,6 +282,48 @@ export default function OrderDetailPage() {
             </div>
           ))}
         </div>
+        <div
+        style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            marginTop: '28px',
+        }}
+        >
+        {(order.status === 'PROCESSING' ||
+            order.status === 'IN_TRANSIT') && (
+            <button
+            style={{
+                border: 'none',
+                backgroundColor: '#dc2626',
+                color: 'white',
+                padding: '14px 24px',
+                borderRadius: '14px',
+                fontSize: '15px',
+                fontWeight: 700,
+                cursor: 'pointer',
+            }}
+            >
+            Cancel Order
+            </button>
+        )}
+
+  {order.status === 'DELIVERED' && (
+    <button
+      style={{
+        border: 'none',
+        backgroundColor: '#111827',
+        color: 'white',
+        padding: '14px 24px',
+        borderRadius: '14px',
+        fontSize: '15px',
+        fontWeight: 700,
+        cursor: 'pointer',
+      }}
+    >
+      Request Return
+    </button>
+  )}
+</div>
 
         <div
           style={{
