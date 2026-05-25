@@ -239,7 +239,9 @@ export default function OrderDetailPage() {
     );
   }
 
-  const s = statusStyle(order.status);
+  const effectiveStatus = (order as any).cancelled || order.isCancelled? 'CANCELLED': order.status;
+
+  const s = statusStyle(effectiveStatus as OrderStatus);
 
   return (
     <div
@@ -498,7 +500,7 @@ export default function OrderDetailPage() {
           }}
         >
           <div>
-            {(order.status === 'PROCESSING' || order.status === 'IN_TRANSIT') && (
+            {(effectiveStatus === 'PROCESSING' || effectiveStatus === 'IN_TRANSIT') && (
               <button
                 onClick={handleCancelOrder}
                 disabled={actionLoading}
@@ -517,7 +519,7 @@ export default function OrderDetailPage() {
               </button>
             )}
 
-            {order.status === 'DELIVERED' && (
+            {effectiveStatus === 'DELIVERED' && (
               <button
                 onClick={() => setShowReturnModal(true)}
                 disabled={actionLoading}

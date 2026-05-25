@@ -14,13 +14,20 @@ type Order = {
   status: OrderStatus;
   totalPrice: number;
   deliveryAddress: string;
+  isCompleted?: boolean;
+  isCancelled?: boolean;
+};
+
+type ReturnItem = {
+  id: string;
+  orderId: string;
+  requestDate: string;
+  reason: string;
+  isApproved: boolean;
+  isCompleted: boolean;
 };
 
 type Tab = 'account' | 'orders' | 'returns';
-
-// -----------------------------------------------------------------------------
-// Helpers
-// -----------------------------------------------------------------------------
 
 function formatDate(value: unknown): string {
   if (value === null || value === undefined || value === '') return '';
@@ -42,14 +49,12 @@ function statusStyle(status: OrderStatus): { bg: string; fg: string; label: stri
       return { bg: '#eff6ff', fg: '#1d4ed8', label: 'In transit' };
     case 'DELIVERED':
       return { bg: '#f0fdf4', fg: '#15803d', label: 'Delivered' };
+    case 'CANCELLED':
+      return { bg: '#fef2f2', fg: '#b91c1c', label: 'Cancelled' };
     default:
       return { bg: '#f3f4f6', fg: '#374151', label: String(status) };
   }
 }
-
-// -----------------------------------------------------------------------------
-// Account tab
-// -----------------------------------------------------------------------------
 
 type FieldStatus = { kind: 'idle' } | { kind: 'saving' } | { kind: 'saved' } | { kind: 'error'; msg: string };
 
@@ -61,7 +66,6 @@ function AccountTab() {
   const [taxStatus, setTaxStatus] = useState<FieldStatus>({ kind: 'idle' });
   const [addressStatus, setAddressStatus] = useState<FieldStatus>({ kind: 'idle' });
 
-  // Sync local state whenever the user object refreshes.
   useEffect(() => {
     setTaxId(user?.taxId ?? '');
     setHomeAddress(user?.homeAddress ?? '');
@@ -94,9 +98,7 @@ function AccountTab() {
   };
 
   if (!user) {
-    return (
-      <p style={{ color: '#6b7280', fontSize: '15px' }}>Loading account…</p>
-    );
+    return <p style={{ color: '#6b7280', fontSize: '15px' }}>Loading account…</p>;
   }
 
   const taxIdChanged = taxId !== (user.taxId ?? '');
@@ -139,12 +141,7 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <label style={fieldLabelStyle}>{label}</label>
-      <input
-        type="text"
-        value={value}
-        disabled
-        style={{ ...inputStyle, ...disabledInputStyle }}
-      />
+      <input type="text" value={value} disabled style={{ ...inputStyle, ...disabledInputStyle }} />
     </div>
   );
 }
@@ -171,12 +168,7 @@ function EditableField({
     <div>
       <label style={fieldLabelStyle}>{label}</label>
       <div style={{ display: 'flex', gap: '10px' }}>
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          style={{ ...inputStyle, flex: 1 }}
-        />
+        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
         <button
           onClick={onSave}
           disabled={buttonDisabled}
@@ -195,19 +187,11 @@ function EditableField({
           {isSaving ? 'Saving…' : 'Change'}
         </button>
       </div>
-      {status.kind === 'saved' && (
-        <p style={{ fontSize: '13px', color: '#15803d', margin: '8px 0 0 0' }}>✓ Saved</p>
-      )}
-      {status.kind === 'error' && (
-        <p style={{ fontSize: '13px', color: '#ef4444', margin: '8px 0 0 0' }}>{status.msg}</p>
-      )}
+      {status.kind === 'saved' && <p style={{ fontSize: '13px', color: '#15803d', margin: '8px 0 0 0' }}>✓ Saved</p>}
+      {status.kind === 'error' && <p style={{ fontSize: '13px', color: '#ef4444', margin: '8px 0 0 0' }}>{status.msg}</p>}
     </div>
   );
 }
-
-// -----------------------------------------------------------------------------
-// Orders tab
-// -----------------------------------------------------------------------------
 
 function OrdersTab() {
   const router = useRouter();
@@ -232,27 +216,12 @@ function OrdersTab() {
     }
   }, []);
 
-  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   if (loading) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <style>{`
-          @keyframes shimmer {
-            0% { background-position: -600px 0; }
-            100% { background-position: 600px 0; }
-          }
-          .order-sk {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 600px 100%;
-            animation: shimmer 1.4s infinite;
-          }
-        `}</style>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="order-sk" style={{ height: '64px', borderRadius: '14px' }} />
-        ))}
-      </div>
-    );
+    return <div style={{ padding: '24px' }}>Loading orders...</div>;
   }
 
   if (error) {
@@ -275,7 +244,6 @@ function OrdersTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
-      {/* Header row — hidden on small viewports for simplicity */}
       <div
         style={{
           display: 'grid',
@@ -297,9 +265,9 @@ function OrdersTab() {
       </div>
 
       {orders.map((order) => {
-        const effectiveStatus =(order as any).isCancelled ? 'CANCELLED' : order.status;
-
+        const effectiveStatus = (order as any).cancelled ? 'CANCELLED' : order.status;
         const s = statusStyle(effectiveStatus as OrderStatus);
+
         return (
           <div
             key={order.id}
@@ -316,22 +284,31 @@ function OrdersTab() {
               borderRadius: '16px',
               marginTop: '8px',
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.backgroundColor = '#fafafa'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.backgroundColor = 'transparent'; }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLDivElement).style.backgroundColor = '#fafafa';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLDivElement).style.backgroundColor = 'transparent';
+            }}
           >
             <span style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '14px', fontWeight: 600, color: '#111827' }}>
               {shortOrderId(order.id)}
             </span>
-            <span style={{ fontSize: '14px', color: '#4b5563' }}>
-              {formatDate(order.orderDate)}
-            </span>
+            <span style={{ fontSize: '14px', color: '#4b5563' }}>{formatDate(order.orderDate)}</span>
             <span>
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                padding: '4px 12px', borderRadius: '20px',
-                backgroundColor: s.bg, color: s.fg,
-                fontSize: '13px', fontWeight: 600,
-              }}>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '4px 12px',
+                  borderRadius: '20px',
+                  backgroundColor: s.bg,
+                  color: s.fg,
+                  fontSize: '13px',
+                  fontWeight: 600,
+                }}
+              >
                 <span style={{ fontSize: '8px' }}>●</span>
                 {s.label}
               </span>
@@ -346,18 +323,115 @@ function OrdersTab() {
   );
 }
 
-// -----------------------------------------------------------------------------
-// Page
-// -----------------------------------------------------------------------------
+function ReturnsTab() {
+  const [returns, setReturns] = useState<ReturnItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchReturns = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
+      const res = await fetch(`${apiBase}/api/return/returns`, {
+        credentials: 'include',
+      });
+
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(json?.message || 'Could not load returns.');
+      }
+
+      setReturns(Array.isArray(json?.data) ? json.data : []);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Could not load returns.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchReturns();
+  }, [fetchReturns]);
+
+  if (loading) {
+    return <div style={{ padding: '24px' }}>Loading returns...</div>;
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: '24px', backgroundColor: '#fef2f2', borderRadius: '14px', color: '#b91c1c', fontSize: '14px' }}>
+        {error}
+      </div>
+    );
+  }
+
+  if (returns.length === 0) {
+    return (
+      <div
+        style={{
+          padding: '48px',
+          borderRadius: '20px',
+          backgroundColor: '#f9fafb',
+          border: '1px solid #e5e7eb',
+          textAlign: 'center',
+        }}
+      >
+        <p style={{ fontSize: '18px', fontWeight: 700, color: '#111827', marginBottom: '8px' }}>No return requests yet</p>
+        <p style={{ color: '#6b7280' }}>Your return requests will appear here.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {returns.map((ret) => (
+        <div
+          key={ret.id}
+          style={{
+            padding: '22px',
+            borderRadius: '20px',
+            border: '1px solid #e5e7eb',
+            backgroundColor: '#ffffff',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px', gap: '16px' }}>
+            <div>
+              <p style={{ fontWeight: 800, color: '#111827', marginBottom: '6px' }}>Return #{ret.id.slice(-6).toUpperCase()}</p>
+              <p style={{ fontSize: '14px', color: '#6b7280' }}>Order #{ret.orderId.slice(-6).toUpperCase()}</p>
+            </div>
+
+            <div
+              style={{
+                padding: '8px 14px',
+                borderRadius: '999px',
+                backgroundColor: ret.isCompleted ? '#f0fdf4' : ret.isApproved ? '#eff6ff' : '#fefce8',
+                color: ret.isCompleted ? '#15803d' : ret.isApproved ? '#2563eb' : '#a16207',
+                fontWeight: 700,
+                fontSize: '13px',
+                height: 'fit-content',
+              }}
+            >
+              {ret.isCompleted ? 'Completed' : ret.isApproved ? 'Approved' : 'Pending'}
+            </div>
+          </div>
+
+          <p style={{ fontSize: '14px', color: '#374151', marginBottom: '10px' }}>{ret.reason}</p>
+          <p style={{ fontSize: '13px', color: '#9ca3af' }}>{formatDate(ret.requestDate)}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('account');
 
-  // After the AuthContext has had a chance to hydrate from localStorage,
-  // bounce to /login if there's still no user. The 50ms delay avoids a flash
-  // of the login redirect on initial mount.
   useEffect(() => {
     if (user) return;
     const t = setTimeout(() => {
@@ -368,11 +442,8 @@ export default function ProfilePage() {
 
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 24px' }}>
-      <h1 style={{ fontSize: '30px', fontWeight: 800, color: '#111827', margin: '0 0 24px 0' }}>
-        My Profile
-      </h1>
+      <h1 style={{ fontSize: '30px', fontWeight: 800, color: '#111827', margin: '0 0 24px 0' }}>My Profile</h1>
 
-      {/* Tab toggle */}
       <div
         style={{
           display: 'inline-flex',
@@ -408,48 +479,10 @@ export default function ProfilePage() {
         })}
       </div>
 
-      {tab === 'account' ? (
-  <AccountTab />
-) : tab === 'orders' ? (
-  <OrdersTab />
-) : (
-  <div
-    style={{
-      padding: '40px',
-      borderRadius: '20px',
-      border: '1px solid #e5e7eb',
-      backgroundColor: '#f9fafb',
-      textAlign: 'center',
-    }}
-  >
-    <p
-      style={{
-        fontSize: '16px',
-        fontWeight: 600,
-        color: '#111827',
-        marginBottom: '8px',
-      }}
-    >
-      No return requests yet
-    </p>
-
-    <p
-      style={{
-        fontSize: '14px',
-        color: '#6b7280',
-      }}
-    >
-      Your return requests will appear here.
-    </p>
-  </div>
-)}
+      {tab === 'account' ? <AccountTab /> : tab === 'orders' ? <OrdersTab /> : <ReturnsTab />}
     </div>
   );
 }
-
-// -----------------------------------------------------------------------------
-// Shared styles
-// -----------------------------------------------------------------------------
 
 const fieldLabelStyle: React.CSSProperties = {
   display: 'block',
