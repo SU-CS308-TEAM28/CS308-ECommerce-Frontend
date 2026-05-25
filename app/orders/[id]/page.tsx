@@ -89,6 +89,7 @@ export default function OrderDetailPage() {
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [returnReason, setReturnReason] = useState('');
   const [returnQuantities, setReturnQuantities] = useState<Record<string, number>>({});
+  const [returnSubmitted, setReturnSubmitted] = useState(false);
 
   const selectedReturnProducts = useMemo(() => {
     return Object.entries(returnQuantities)
@@ -195,6 +196,7 @@ export default function OrderDetailPage() {
       setShowReturnModal(false);
       setReturnReason('');
       setReturnQuantities({});
+      setReturnSubmitted(true);
       setActionSuccess('Return request submitted successfully.');
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not submit return request.');
@@ -519,7 +521,7 @@ export default function OrderDetailPage() {
               </button>
             )}
 
-            {effectiveStatus === 'DELIVERED' && (
+            {effectiveStatus === 'DELIVERED' && !returnSubmitted && (
               <button
                 onClick={() => setShowReturnModal(true)}
                 disabled={actionLoading}
@@ -537,6 +539,20 @@ export default function OrderDetailPage() {
                 Request Return
               </button>
             )}
+            {effectiveStatus === 'DELIVERED' && returnSubmitted && (
+  <div
+    style={{
+      padding: '14px 20px',
+      borderRadius: '14px',
+      backgroundColor: '#f0fdf4',
+      color: '#15803d',
+      fontSize: '15px',
+      fontWeight: 800,
+    }}
+  >
+    Return request submitted
+  </div>
+)}
           </div>
 
           <div
