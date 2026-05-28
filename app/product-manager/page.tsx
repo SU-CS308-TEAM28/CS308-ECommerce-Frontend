@@ -329,7 +329,7 @@ export default function ProductManagerPage() {
       const json = await res.json();
       if (res.ok) {
         setCatSuccess('Category added!');
-        setCatForm({ abbrv: '', label: '', isPrimitive: true });
+        setCatForm({ abbrv: '', label: '' });
         fetchCategories();
         setTimeout(() => setCatSuccess(''), 2000);
       } else setCatError(json?.message || 'Failed to add category.');
