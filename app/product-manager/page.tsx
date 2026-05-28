@@ -147,8 +147,11 @@ export default function ProductManagerPage() {
   const [deleteCatConfirm, setDeleteCatConfirm] = useState<Category | null>(null);
 
   useEffect(() => {
-    if (user && user.userType !== 'product_manager') router.push('/');
     fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (user && user.userType !== 'product_manager') router.push('/');
   }, [user]);
 
   useEffect(() => {
@@ -329,7 +332,7 @@ export default function ProductManagerPage() {
       const json = await res.json();
       if (res.ok) {
         setCatSuccess('Category added!');
-        setCatForm({ abbrv: '', label: '' });
+        setCatForm({ abbrv: '', label: '', isPrimitive: true });
         fetchCategories();
         setTimeout(() => setCatSuccess(''), 2000);
       } else setCatError(json?.message || 'Failed to add category.');
