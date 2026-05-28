@@ -225,11 +225,7 @@ export default function SalesManagerPage() {
             <span>{p.icon}</span>{p.label}
           </button>
         ))}
-        <div style={{ marginTop: 'auto', paddingTop: '24px' }}>
-          <button onClick={() => router.push('/')} style={{ padding: '10px 14px', borderRadius: '10px', border: 'none', textAlign: 'left', backgroundColor: 'transparent', color: '#6b7280', fontSize: '14px', cursor: 'pointer', width: '100%' }}>
-            ← Back to Store
-          </button>
-        </div>
+
       </aside>
 
       {/* Main */}

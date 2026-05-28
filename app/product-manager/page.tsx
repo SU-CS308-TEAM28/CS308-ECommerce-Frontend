@@ -62,7 +62,17 @@ type Order = {
   isCancelled: boolean;
 };
 
-type Panel = 'add' | 'products' | 'orders' | 'comments' | 'categories';
+type ReturnData = {
+  id: string;
+  orderId: string;
+  products: CartProduct[];
+  reason: string;
+  requestDate: string;
+  isApproved: boolean;
+  isCompleted: boolean;
+};
+
+type Panel = 'add' | 'products' | 'orders' | 'comments' | 'categories' | 'returns';
 
 const STATUS_OPTIONS = [
   { value: 'IN_TRANSIT', label: 'In Transit', color: '#3b82f6', bg: '#eff6ff' },
@@ -124,8 +134,12 @@ export default function ProductManagerPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
 
+  // Returns
+  const [returns, setReturns] = useState<ReturnData[]>([]);
+  const [loadingReturns, setLoadingReturns] = useState(false);
+
   // Categories management
-  const [catForm, setCatForm] = useState({ abbrv: '', label: '', isPrimitive: true });
+  const [catForm, setCatForm] = useState({ abbrv: '', label: '' });
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [catLoading, setCatLoading] = useState(false);
   const [catSuccess, setCatSuccess] = useState('');
@@ -141,6 +155,7 @@ export default function ProductManagerPage() {
     if (activePanel === 'products') fetchProducts();
     if (activePanel === 'orders') fetchOrders();
     if (activePanel === 'comments') fetchComments();
+    if (activePanel === 'returns') fetchReturns();
   }, [activePanel]);
 
   // Reset subcategories when category changes in add form
@@ -173,6 +188,26 @@ export default function ProductManagerPage() {
       const all: Order[] = json?.data ?? [];
       setOrders(all.filter(o => o.status === 'PROCESSING' && !o.isCancelled));
     } catch {} finally { setLoadingOrders(false); }
+  }
+
+  async function fetchReturns() {
+    setLoadingReturns(true);
+    try {
+      const res = await fetch('/api/return/returns', { credentials: 'include' });
+      const json = await res.json();
+      setReturns(json?.data ?? []);
+    } catch {} finally { setLoadingReturns(false); }
+  }
+
+  async function handleReturnAction(returnId: string, action: 'approve' | 'complete') {
+    try {
+      const res = await fetch(`/api/return/${action}`, {
+        method: 'PUT', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ returnId }),
+      });
+      if (res.ok) fetchReturns();
+    } catch {}
   }
 
   async function fetchComments() {
@@ -289,7 +324,7 @@ export default function ProductManagerPage() {
       const res = await fetch('/api/product/category/add', {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...catForm, subCategories: [] }),
+        body: JSON.stringify({ ...catForm, isPrimitive: false, subCategories: [] }),
       });
       const json = await res.json();
       if (res.ok) {
@@ -331,6 +366,7 @@ export default function ProductManagerPage() {
     { key: 'orders', label: 'Orders', icon: '🚚' },
     { key: 'comments', label: 'Comments', icon: '💬' },
     { key: 'categories', label: 'Categories', icon: '🏷️' },
+    { key: 'returns', label: 'Returns', icon: '↩️' },
   ];
 
   const inputStyle: React.CSSProperties = {
@@ -630,6 +666,78 @@ export default function ProductManagerPage() {
           </div>
         )}
 
+        {/* RETURNS */}
+        {activePanel === 'returns' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#111827', margin: 0 }}>Returns</h1>
+              <span style={{ fontSize: '14px', color: '#6b7280' }}>{returns.length} return{returns.length !== 1 ? 's' : ''}</span>
+            </div>
+            {loadingReturns ? <p style={{ color: '#6b7280' }}>Loading...</p> : returns.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 0', color: '#9ca3af' }}>
+                <p style={{ fontSize: '40px', margin: '0 0 12px 0' }}>↩️</p>
+                <p>No return requests.</p>
+              </div>
+            ) : (
+              <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                      {['Return ID', 'Order ID', 'Date', 'Reason', 'Products', 'Current Status', 'Actions'].map(h => (
+                        <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {returns.map((ret, i) => {
+                      const status = ret.isCompleted ? 'COMPLETED' : ret.isApproved ? 'APPROVED' : 'PENDING';
+                      const statusStyles: Record<string, { label: string; color: string; bg: string }> = {
+                        PENDING: { label: 'Pending', color: '#f59e0b', bg: '#fefce8' },
+                        APPROVED: { label: 'Approved', color: '#3b82f6', bg: '#eff6ff' },
+                        COMPLETED: { label: 'Completed', color: '#16a34a', bg: '#f0fdf4' },
+                      };
+                      const ss = statusStyles[status];
+                      return (
+                        <tr key={ret.id} style={{ borderBottom: i < returns.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
+                          <td style={{ padding: '14px 16px', fontSize: '13px', fontFamily: 'monospace', color: '#374151' }}>#{ret.id.slice(-8).toUpperCase()}</td>
+                          <td style={{ padding: '14px 16px', fontSize: '13px', fontFamily: 'monospace', color: '#6b7280' }}>#{ret.orderId?.slice(-8).toUpperCase()}</td>
+                          <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6b7280' }}>{ret.requestDate ? new Date(ret.requestDate).toLocaleDateString('tr-TR') : '—'}</td>
+                          <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6b7280', maxWidth: '140px' }}>
+                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ret.reason || '—'}</div>
+                          </td>
+                          <td style={{ padding: '14px 16px', fontSize: '13px', color: '#374151' }}>{ret.products?.length ?? 0} item{(ret.products?.length ?? 0) !== 1 ? 's' : ''}</td>
+                          <td style={{ padding: '14px 16px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', backgroundColor: ss.bg, color: ss.color, fontSize: '12px', fontWeight: 600 }}>
+                              ● {ss.label}
+                            </span>
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            {status === 'PENDING' && (
+                              <button onClick={() => handleReturnAction(ret.id, 'approve')}
+                                style={{ padding: '7px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#eff6ff', color: '#3b82f6', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                                Approve
+                              </button>
+                            )}
+                            {status === 'APPROVED' && (
+                              <button onClick={() => handleReturnAction(ret.id, 'complete')}
+                                style={{ padding: '7px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#f0fdf4', color: '#16a34a', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                                Complete
+                              </button>
+                            )}
+                            {status === 'COMPLETED' && (
+                              <span style={{ fontSize: '13px', color: '#9ca3af' }}>—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* CATEGORIES */}
         {activePanel === 'categories' && (
           <div style={{ maxWidth: '700px' }}>
@@ -647,12 +755,7 @@ export default function ProductManagerPage() {
                   <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '5px' }}>Abbreviation *</label>
                   <input type="text" value={catForm.abbrv} onChange={e => setCatForm(prev => ({ ...prev, abbrv: e.target.value }))} placeholder="e.g. computers" style={inputStyle} />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => setCatForm(prev => ({ ...prev, isPrimitive: !prev.isPrimitive }))}>
-                  <div style={{ width: '20px', height: '20px', borderRadius: '6px', border: '2px solid #d1d5db', backgroundColor: catForm.isPrimitive ? '#111827' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {catForm.isPrimitive && <span style={{ color: '#fff', fontSize: '12px' }}>✓</span>}
-                  </div>
-                  <span style={{ fontSize: '14px', color: '#374151' }}>Is Primary Category</span>
-                </div>
+
                 {catError && <p style={{ fontSize: '13px', color: '#ef4444', margin: 0 }}>{catError}</p>}
                 {catSuccess && <p style={{ fontSize: '13px', color: '#16a34a', margin: 0 }}>{catSuccess}</p>}
                 <button onClick={handleAddCategory} disabled={catLoading}
@@ -684,10 +787,12 @@ export default function ProductManagerPage() {
                       </td>
                       <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6b7280' }}>{cat.subCategories?.length ?? 0}</td>
                       <td style={{ padding: '14px 16px' }}>
-                        <button onClick={() => setDeleteCatConfirm(cat)}
-                          style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', backgroundColor: '#fef2f2', color: '#ef4444', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-                          🗑️
-                        </button>
+                        {!cat.isPrimitive && (
+                          <button onClick={() => setDeleteCatConfirm(cat)}
+                            style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', backgroundColor: '#fef2f2', color: '#ef4444', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                            🗑️
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
