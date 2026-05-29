@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import Link from 'next/link';
 
 type OrderStatus = 'PROCESSING' | 'IN_TRANSIT' | 'DELIVERED' | 'CANCELLED';
 
@@ -23,8 +24,8 @@ type ReturnItem = {
   orderId: string;
   requestDate: string;
   reason: string;
-  isApproved: boolean;
-  isCompleted: boolean;
+  approved: boolean;
+  completed: boolean;
 };
 
 type Tab = 'account' | 'orders' | 'returns';
@@ -401,21 +402,23 @@ function ReturnsTab() {
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px', gap: '16px' }}>
             <div>
               <p style={{ fontWeight: 800, color: '#111827', marginBottom: '6px' }}>Return #{ret.id.slice(-6).toUpperCase()}</p>
-              <p style={{ fontSize: '14px', color: '#6b7280' }}>Order #{ret.orderId.slice(-6).toUpperCase()}</p>
+              <Link href={`/orders/${ret.orderId}`} style={{ fontSize: '14px', textDecoration: 'underline' }}>
+                <p style={{ fontSize: '14px', color: '#6b7280' }}>Order #{ret.orderId.slice(-6).toUpperCase()}</p>
+              </Link>
             </div>
 
             <div
               style={{
                 padding: '8px 14px',
                 borderRadius: '999px',
-                backgroundColor: ret.isCompleted ? '#f0fdf4' : ret.isApproved ? '#eff6ff' : '#fefce8',
-                color: ret.isCompleted ? '#15803d' : ret.isApproved ? '#2563eb' : '#a16207',
+                backgroundColor: ret.completed ? '#f0fdf4' : ret.approved ? '#eff6ff' : '#fefce8',
+                color: ret.completed ? '#15803d' : ret.approved ? '#2563eb' : '#a16207',
                 fontWeight: 700,
                 fontSize: '13px',
                 height: 'fit-content',
               }}
             >
-              {ret.isCompleted ? 'Completed' : ret.isApproved ? 'Approved' : 'Pending'}
+              {ret.completed ? 'Completed' : ret.approved ? 'Approved' : 'Pending'}
             </div>
           </div>
 
