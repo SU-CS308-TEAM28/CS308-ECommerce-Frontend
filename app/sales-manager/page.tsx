@@ -78,11 +78,6 @@ export default function SalesManagerPage() {
   const [invoiceLoading, setInvoiceLoading] = useState(false);
 
 
-
-  useEffect(() => {
-    if (user && user.userType !== 'sales_manager') router.push('/');
-  }, [user]);
-
   useEffect(() => {
     if (activePanel === 'pricing') fetchProducts();
     if (activePanel === 'orders') fetchOrders();
@@ -186,16 +181,6 @@ export default function SalesManagerPage() {
       }
     } catch { alert('Could not connect to server.'); }
     finally { setInvoiceLoading(false); }
-  }
-
-  if (!user || user.userType !== 'sales_manager') {
-    return (
-      <div style={{ maxWidth: '600px', margin: '80px auto', textAlign: 'center' }}>
-        <p style={{ fontSize: '48px' }}>🔒</p>
-        <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#111827' }}>Access Denied</h2>
-        <p style={{ color: '#6b7280' }}>This page is only accessible to Sales Managers.</p>
-      </div>
-    );
   }
 
   const panels: { key: Panel; label: string; icon: string }[] = [
@@ -391,6 +376,7 @@ export default function SalesManagerPage() {
             )}
           </div>
         )}
+      </main>
 
 
       {/* Edit Price Modal */}

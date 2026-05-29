@@ -517,7 +517,7 @@ export default function ProductManagerPage() {
                   <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '8px' }}>Subcategories</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                     {availableSubcategories.map(sub => (
-                      <label key={sub.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '14px', color: '#374151' }}>
+                      <label key={sub.abbrv} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '14px', color: '#374151' }}>
                         <input
                           type="checkbox"
                           checked={selectedSubcategories.includes(sub.abbrv)}
