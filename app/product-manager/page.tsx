@@ -68,8 +68,8 @@ type ReturnData = {
   products: CartProduct[];
   reason: string;
   requestDate: string;
-  isApproved: boolean;
-  isCompleted: boolean;
+  approved: boolean;
+  completed: boolean;
 };
 
 type Panel = 'add' | 'products' | 'orders' | 'comments' | 'categories' | 'returns';
@@ -717,7 +717,8 @@ export default function ProductManagerPage() {
                   </thead>
                   <tbody>
                     {returns.map((ret, i) => {
-                      const status = (ret.completed || ret.isCompleted) ? 'COMPLETED' : (ret.approved || ret.isApproved) ? 'APPROVED' : 'PENDING';
+                      console.log(ret)
+                      const status = (ret.completed) ? 'COMPLETED' : (ret.approved) ? 'APPROVED' : 'PENDING';
                       const statusStyles: Record<string, { label: string; color: string; bg: string }> = {
                         PENDING: { label: 'Pending', color: '#f59e0b', bg: '#fefce8' },
                         APPROVED: { label: 'Approved', color: '#3b82f6', bg: '#eff6ff' },
