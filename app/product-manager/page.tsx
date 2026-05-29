@@ -139,7 +139,7 @@ export default function ProductManagerPage() {
   const [loadingReturns, setLoadingReturns] = useState(false);
 
   // Categories management
-  const [catForm, setCatForm] = useState({ abbrv: '', label: '' });
+  const [catForm, setCatForm] = useState({ abbrv: '', label: '', parentId: '' });
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [catLoading, setCatLoading] = useState(false);
   const [catSuccess, setCatSuccess] = useState('');
@@ -324,18 +324,41 @@ export default function ProductManagerPage() {
   async function handleAddCategory() {
     setCatLoading(true); setCatError(''); setCatSuccess('');
     try {
-      const res = await fetch('/api/product/category/add', {
-        method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...catForm, isPrimitive: false, subCategories: [] }),
-      });
-      const json = await res.json();
-      if (res.ok) {
-        setCatSuccess('Category added!');
-        setCatForm({ abbrv: '', label: '', isPrimitive: true });
-        fetchCategories();
-        setTimeout(() => setCatSuccess(''), 2000);
-      } else setCatError(json?.message || 'Failed to add category.');
+      if (catForm.parentId) {
+        // Add as subcategory: update parent category
+        const parentRes = await fetch('/api/product/category/list', { credentials: 'include' });
+        const parentJson = await parentRes.json();
+        const parent = (parentJson?.data ?? []).find((c: Category) => c.id === catForm.parentId);
+        if (!parent) { setCatError('Parent category not found.'); return; }
+        const newSub = { id: null, abbrv: catForm.abbrv, label: catForm.label, isPrimitive: null, subCategories: null };
+        const updatedSubs = [...(parent.subCategories ?? []), newSub];
+        const putRes = await fetch(`/api/product/category/${catForm.parentId}`, {
+          method: 'PUT', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...parent, subCategories: updatedSubs }),
+        });
+        const putJson = await putRes.json();
+        if (putRes.ok) {
+          setCatSuccess('Subcategory added!');
+          setCatForm({ abbrv: '', label: '', parentId: '' });
+          fetchCategories();
+          setTimeout(() => setCatSuccess(''), 2000);
+        } else setCatError(putJson?.message || 'Failed to add subcategory.');
+      } else {
+        // Add as top-level category
+        const res = await fetch('/api/product/category/add', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ abbrv: catForm.abbrv, label: catForm.label, isPrimitive: false, subCategories: [] }),
+        });
+        const json = await res.json();
+        if (res.ok) {
+          setCatSuccess('Category added!');
+          setCatForm({ abbrv: '', label: '', parentId: '' });
+          fetchCategories();
+          setTimeout(() => setCatSuccess(''), 2000);
+        } else setCatError(json?.message || 'Failed to add category.');
+      }
     } catch { setCatError('Could not connect to server.'); }
     finally { setCatLoading(false); }
   }
@@ -484,7 +507,7 @@ export default function ProductManagerPage() {
                 <select value={form.category} onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))}
                   style={{ ...inputStyle, backgroundColor: '#fff' }}>
                   <option value="">Select category...</option>
-                  {categories.filter(c => c.isPrimitive).map(c => <option key={c.id} value={c.abbrv}>{c.label}</option>)}
+                  {categories.map(c => <option key={c.id} value={c.abbrv}>{c.label}</option>)}
                 </select>
               </div>
 
@@ -693,7 +716,7 @@ export default function ProductManagerPage() {
                   </thead>
                   <tbody>
                     {returns.map((ret, i) => {
-                      const status = ret.isCompleted ? 'COMPLETED' : ret.isApproved ? 'APPROVED' : 'PENDING';
+                      const status = (ret.completed || ret.isCompleted) ? 'COMPLETED' : (ret.approved || ret.isApproved) ? 'APPROVED' : 'PENDING';
                       const statusStyles: Record<string, { label: string; color: string; bg: string }> = {
                         PENDING: { label: 'Pending', color: '#f59e0b', bg: '#fefce8' },
                         APPROVED: { label: 'Approved', color: '#3b82f6', bg: '#eff6ff' },
@@ -759,6 +782,14 @@ export default function ProductManagerPage() {
                   <input type="text" value={catForm.abbrv} onChange={e => setCatForm(prev => ({ ...prev, abbrv: e.target.value }))} placeholder="e.g. computers" style={inputStyle} />
                 </div>
 
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '5px' }}>Parent Category (optional)</label>
+                  <select value={catForm.parentId} onChange={e => setCatForm(prev => ({ ...prev, parentId: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none', boxSizing: 'border-box', backgroundColor: '#fff' }}>
+                    <option value="">None (top-level category)</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                  </select>
+                </div>
                 {catError && <p style={{ fontSize: '13px', color: '#ef4444', margin: 0 }}>{catError}</p>}
                 {catSuccess && <p style={{ fontSize: '13px', color: '#16a34a', margin: 0 }}>{catSuccess}</p>}
                 <button onClick={handleAddCategory} disabled={catLoading}
@@ -773,7 +804,7 @@ export default function ProductManagerPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                    {['Label', 'Abbreviation', 'Type', 'Subcategories', ''].map(h => (
+                    {['Label', 'Abbreviation', 'Subcategories', ''].map(h => (
                       <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>{h}</th>
                     ))}
                   </tr>
@@ -783,11 +814,7 @@ export default function ProductManagerPage() {
                     <tr key={cat.id} style={{ borderBottom: i < categories.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
                       <td style={{ padding: '14px 16px', fontSize: '14px', fontWeight: 500, color: '#111827' }}>{cat.label}</td>
                       <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6b7280', fontFamily: 'monospace' }}>{cat.abbrv}</td>
-                      <td style={{ padding: '14px 16px', fontSize: '13px' }}>
-                        <span style={{ padding: '2px 8px', borderRadius: '6px', backgroundColor: cat.isPrimitive ? '#eff6ff' : '#f3f4f6', color: cat.isPrimitive ? '#3b82f6' : '#6b7280', fontSize: '12px', fontWeight: 600 }}>
-                          {cat.isPrimitive ? 'Primary' : 'Sub'}
-                        </span>
-                      </td>
+
                       <td style={{ padding: '14px 16px', fontSize: '13px', color: '#6b7280' }}>{cat.subCategories?.length ?? 0}</td>
                       <td style={{ padding: '14px 16px' }}>
                         {!cat.isPrimitive && (
