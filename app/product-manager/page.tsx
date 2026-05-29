@@ -116,6 +116,7 @@ export default function ProductManagerPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editForm, setEditForm] = useState<Partial<Product>>({});
   const [editImageUrls, setEditImageUrls] = useState<string[]>(['']);
+  const [editSelectedSubcategories, setEditSelectedSubcategories] = useState<string[]>([]);
   const [editLoading, setEditLoading] = useState(false);
   const [editSuccess, setEditSuccess] = useState('');
   const [editError, setEditError] = useState('');
@@ -261,8 +262,8 @@ export default function ProductManagerPage() {
         warrantyStatus: editForm.warrantyStatus, distributorInformation: editForm.distributorInformation,
         thumbnailUrl: editForm.thumbnailUrl || null,
         imageUrls: editImageUrls.filter(u => u.trim()),
-        category: editingProduct.category,
-        subcategories: editingProduct.subcategories ?? [],
+        category: editForm.category ?? editingProduct.category,
+        subcategories: editSelectedSubcategories,
         stock: editForm.stock, extraProps: editForm.extraProps ?? [],
       };
       const res = await fetch(`/api/product/${editingProduct.id}`, {
@@ -572,7 +573,7 @@ export default function ProductManagerPage() {
                         <td style={{ padding: '12px 16px', fontSize: '14px', color: product.stock === 0 ? '#ef4444' : '#111827', fontWeight: 600 }}>{product.stock}</td>
                         <td style={{ padding: '12px 16px' }}>
                           <div style={{ display: 'flex', gap: '6px' }}>
-                            <button onClick={() => { setEditingProduct(product); setEditForm({ ...product }); setEditImageUrls(product.imageUrls?.length ? [...product.imageUrls] : ['']); setEditSuccess(''); setEditError(''); }}
+                            <button onClick={() => { setEditingProduct(product); setEditForm({ ...product }); setEditImageUrls(product.imageUrls?.length ? [...product.imageUrls] : ['']); setEditSelectedSubcategories(product.subcategories ?? []); setEditSuccess(''); setEditError(''); }}
                               style={{ padding: '7px 12px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#374151', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
                               ✏️ Edit
                             </button>
@@ -879,6 +880,38 @@ export default function ProductManagerPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Category */}
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '4px' }}>Category</label>
+                <select value={editForm.category ?? ''} onChange={e => { setEditForm(prev => ({ ...prev, category: e.target.value })); setEditSelectedSubcategories([]); }}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none', boxSizing: 'border-box', backgroundColor: '#fff' }}>
+                  <option value="">Select category...</option>
+                  {categories.map(c => <option key={c.id} value={c.abbrv}>{c.label}</option>)}
+                </select>
+              </div>
+
+              {/* Subcategories */}
+              {editForm.category && (() => {
+                const cat = categories.find(c => c.abbrv === editForm.category);
+                const subs = cat?.subCategories ?? [];
+                if (!subs.length) return null;
+                return (
+                  <div>
+                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '8px' }}>Subcategories</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                      {subs.map(sub => (
+                        <label key={sub.abbrv} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '14px', color: '#374151' }}>
+                          <input type="checkbox" checked={editSelectedSubcategories.includes(sub.abbrv)}
+                            onChange={e => setEditSelectedSubcategories(prev => e.target.checked ? [...prev, sub.abbrv] : prev.filter(s => s !== sub.abbrv))}
+                            style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+                          {sub.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {editError && <p style={{ fontSize: '13px', color: '#ef4444', margin: 0 }}>{editError}</p>}
               {editSuccess && <p style={{ fontSize: '13px', color: '#16a34a', margin: 0 }}>{editSuccess}</p>}
