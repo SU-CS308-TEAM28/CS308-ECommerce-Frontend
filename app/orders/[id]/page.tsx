@@ -26,8 +26,9 @@ type Order = {
   totalPrice: number;
   deliveryAddress: string;
   products: Product[];
-  isCompleted?: boolean;
-  isCancelled?: boolean;
+  completed?: boolean;
+  cancelled?: boolean;
+  returnRequested?: boolean;
 };
 
 function formatDate(date: string) {
@@ -132,6 +133,7 @@ export default function OrderDetailPage() {
       }
 
       setOrder(json?.data ?? null);
+      setReturnSubmitted(json?.data?.returnRequested ?? false);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not load order.');
     } finally {
@@ -246,7 +248,7 @@ export default function OrderDetailPage() {
     );
   }
 
-  const effectiveStatus = (order as any).cancelled || order.isCancelled? 'CANCELLED': order.status;
+  const effectiveStatus = order.cancelled ? 'CANCELLED' : order.status;
 
   const s = statusStyle(effectiveStatus as OrderStatus);
 
@@ -545,19 +547,19 @@ export default function OrderDetailPage() {
               </button>
             )}
             {effectiveStatus === 'DELIVERED' && returnSubmitted && (
-  <div
-    style={{
-      padding: '14px 20px',
-      borderRadius: '14px',
-      backgroundColor: '#f0fdf4',
-      color: '#15803d',
-      fontSize: '15px',
-      fontWeight: 800,
-    }}
-  >
-    Return request submitted
-  </div>
-)}
+              <div
+                style={{
+                  padding: '14px 20px',
+                  borderRadius: '14px',
+                  backgroundColor: '#f0fdf4',
+                  color: '#15803d',
+                  fontSize: '15px',
+                  fontWeight: 800,
+                }}
+              >
+                Return request submitted
+              </div>
+            )}
           </div>
 
           <div
