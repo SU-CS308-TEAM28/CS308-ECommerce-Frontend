@@ -4,28 +4,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ProductCard, { Product } from '../../components/ProductCard';
 
-const CATEGORIES = [
-  { label: 'All', value: '' },
-  { label: 'Computers', value: 'COMPUTERS' },
-  { label: 'Tablets', value: 'TABLETS' },
-  { label: 'Phones', value: 'PHONES' },
-  { label: 'TVs', value: 'TVs' },
-  { label: 'Home & Living', value: 'HOME_AND_LIVING' }
-];
-
-const CATEGORY_PARAM_MAP: Record<string, string> = {
-  computers: 'COMPUTERS',
-  tablets: 'TABLETS',
-  phones: 'PHONES',
-  tvs: 'TVs',
-  home: 'HOME_AND_LIVING',
-};
+type CategoryOption = { label: string; value: string };
 
 function getInitialCategory(): string {
   if (typeof window === 'undefined') return '';
   const params = new URLSearchParams(window.location.search);
-  const c = params.get('c') ?? '';
-  return CATEGORY_PARAM_MAP[c.toLowerCase()] ?? '';
+  return params.get('c') ?? '';
 }
 
 function getInitialSearch(): string {
@@ -46,7 +30,26 @@ export default function ProductsPage() {
   const [priceMax, setPriceMax] = useState('');
   const [sortBy, setSortBy] = useState('popular');
   const [page] = useState(0);
+  const [categories, setCategories] = useState<CategoryOption[]>([{ label: 'All', value: '' }]);
   const PAGE_SIZE = 12;
+
+  // Fetch categories from backend
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch('/api/product/category/list');
+        const json = await res.json();
+        const data = Array.isArray(json?.data) ? json.data : [];
+        const primaryCategories: CategoryOption[] = data
+          .filter((c: any) => c.isPrimitive)
+          .map((c: any) => ({ label: c.label, value: c.abbrv }));
+        setCategories([{ label: 'All', value: '' }, ...primaryCategories]);
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    }
+    fetchCategories();
+  }, []);
 
   // Read URL params on mount
   useEffect(() => {
@@ -70,7 +73,7 @@ export default function ProductsPage() {
         sort,
         order,
       });
-      if (searchParams.get('c')) params.set('category', CATEGORY_PARAM_MAP[searchParams.get('c')!] ?? '');
+      if (searchParams.get('c')) params.set('category', searchParams.get('c')!);
       if (searchParams.get('q')) params.set('search', searchParams.get('q')!);
       if (priceMin !== '') params.set('minPrice', priceMin);
       if (priceMax !== '') params.set('maxPrice', priceMax);
@@ -100,18 +103,15 @@ export default function ProductsPage() {
     // Update URL without reload
     const url = new URL(window.location.href);
     if (value) {
-      const reverseMap: Record<string, string> = {
-        PHONES: 'phones', TABLETS: 'tablets', COMPUTERS: 'computers', TVs: 'tvs', HOME_AND_LIVING: 'home',
-      };
       url.searchParams.delete('q');
-      url.searchParams.set('c', reverseMap[value] ?? value.toLowerCase());
+      url.searchParams.set('c', value);
     } else {
       url.searchParams.delete('c');
     }
     router.push(url.toString());
   };
 
-  const categoryLabel = CATEGORIES.find((c) => c.value === selectedCategory)?.label ?? 'All';
+  const categoryLabel = categories.find((c) => c.value === selectedCategory)?.label ?? 'All';
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
@@ -126,7 +126,7 @@ export default function ProductsPage() {
             Categories
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.value}
                 onClick={() => handleCategoryChange(cat.value)}
