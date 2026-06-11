@@ -208,7 +208,7 @@ function OrdersTab() {
       const res = await fetch(`${apiBase}/api/order/orders`, { credentials: 'include' });
       const json = await res.json().catch(() => null);
       const data = json?.data;
-      setOrders(Array.isArray(data) ? data : []);
+      setOrders(Array.isArray(data) ? data.reverse() : []);
     } catch (err) {
       console.error(err);
       setError('Could not load orders.');

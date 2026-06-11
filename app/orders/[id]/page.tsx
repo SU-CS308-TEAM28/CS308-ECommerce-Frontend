@@ -197,6 +197,7 @@ export default function OrderDetailPage() {
       const json = await res.json().catch(() => null);
 
       if (!res.ok) {
+        setShowReturnModal(false);
         throw new Error(json?.message || 'Could not submit return request.');
       }
 

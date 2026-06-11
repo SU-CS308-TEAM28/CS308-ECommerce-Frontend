@@ -190,7 +190,7 @@ export default function ProductManagerPage() {
       const res = await fetch('/api/order/orders', { credentials: 'include' });
       const json = await res.json();
       const all: Order[] = json?.data ?? [];
-      setOrders(all.filter(o => o.status === 'PROCESSING' && !o.isCancelled));
+      setOrders(all);
     } catch {} finally { setLoadingOrders(false); }
   }
 
