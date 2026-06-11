@@ -40,10 +40,9 @@ export default function ProductsPage() {
         const res = await fetch('/api/product/category/list');
         const json = await res.json();
         const data = Array.isArray(json?.data) ? json.data : [];
-        const primaryCategories: CategoryOption[] = data
-          .filter((c: any) => c.isPrimitive)
+        const allCategories: CategoryOption[] = data
           .map((c: any) => ({ label: c.label, value: c.abbrv }));
-        setCategories([{ label: 'All', value: '' }, ...primaryCategories]);
+        setCategories([{ label: 'All', value: '' }, ...allCategories]);
       } catch (err) {
         console.error('Failed to fetch categories:', err);
       }
