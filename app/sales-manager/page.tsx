@@ -36,7 +36,7 @@ type Product = {
   stock: number;
 };
 
-type Panel = 'pricing' | 'orders';
+type Panel = 'pricing' | 'orders' | 'logout';
 
 const ALL_STATUS_OPTIONS = [
   { value: 'PROCESSING', label: 'Processing', color: '#f59e0b', bg: '#fefce8' },
@@ -186,6 +186,7 @@ export default function SalesManagerPage() {
   const panels: { key: Panel; label: string; icon: string }[] = [
     { key: 'pricing', label: 'Pricing', icon: '💰' },
     { key: 'orders', label: 'Orders', icon: '📋' },
+    { key: 'logout', label: 'Logout', icon: '🚪' },
   ];
 
   const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none', boxSizing: 'border-box' };
@@ -200,7 +201,7 @@ export default function SalesManagerPage() {
           <p style={{ fontSize: '15px', fontWeight: 700, color: '#ffffff', margin: 0 }}>Sales Manager</p>
         </div>
         {panels.map(p => (
-          <button key={p.key} onClick={() => setActivePanel(p.key)} style={{
+          <button key={p.key} onClick={() => p.key === 'logout' ? router.push('/logout') : setActivePanel(p.key)} style={{
             padding: '10px 14px', borderRadius: '10px', border: 'none', textAlign: 'left',
             backgroundColor: activePanel === p.key ? '#374151' : 'transparent',
             color: activePanel === p.key ? '#ffffff' : '#9ca3af',

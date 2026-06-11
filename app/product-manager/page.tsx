@@ -72,7 +72,7 @@ type ReturnData = {
   completed: boolean;
 };
 
-type Panel = 'add' | 'products' | 'orders' | 'comments' | 'categories' | 'returns';
+type Panel = 'add' | 'products' | 'orders' | 'comments' | 'categories' | 'returns' | 'logout';
 
 const STATUS_OPTIONS = [
   { value: 'IN_TRANSIT', label: 'In Transit', color: '#3b82f6', bg: '#eff6ff' },
@@ -394,6 +394,7 @@ export default function ProductManagerPage() {
     { key: 'comments', label: 'Comments', icon: '💬' },
     { key: 'categories', label: 'Categories', icon: '🏷️' },
     { key: 'returns', label: 'Returns', icon: '↩️' },
+    { key: 'logout', label: 'Logout', icon: '🚪' },
   ];
 
   const inputStyle: React.CSSProperties = {
@@ -414,7 +415,7 @@ export default function ProductManagerPage() {
           <p style={{ fontSize: '15px', fontWeight: 700, color: '#ffffff', margin: 0 }}>Product Manager</p>
         </div>
         {panels.map(p => (
-          <button key={p.key} onClick={() => setActivePanel(p.key)} style={{
+          <button key={p.key} onClick={() => p.key === 'logout' ? router.push('/logout') : setActivePanel(p.key)} style={{
             padding: '10px 14px', borderRadius: '10px', border: 'none', textAlign: 'left',
             backgroundColor: activePanel === p.key ? '#374151' : 'transparent',
             color: activePanel === p.key ? '#ffffff' : '#9ca3af',
